@@ -2671,6 +2671,7 @@ OMX_ERRORTYPE omx_video::free_input_buffer(OMX_BUFFERHEADERTYPE *bufferHdr)
     }
 
     if (index < m_sInPortDef.nBufferCountActual && m_pInput_pmem) {
+        auto_lock l(m_lock);
 
         if (m_pInput_pmem[index].fd > 0 && input_use_buffer == false) {
             DEBUG_PRINT_LOW("FreeBuffer:: i/p AllocateBuffer case");
@@ -3617,7 +3618,7 @@ OMX_ERRORTYPE  omx_video::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
     {
         DEBUG_PRINT_LOW("Heap UseBuffer case, so memcpy the data");
 
-        auto_lock l(m_buf_lock);
+        auto_lock l(m_lock);
         pmem_data_buf = (OMX_U8 *)m_pInput_pmem[nBufIndex].buffer;
         if (pmem_data_buf && BITMASK_PRESENT(&m_client_in_bm_count, nBufIndex)) {
             memcpy (pmem_data_buf, (buffer->pBuffer + buffer->nOffset),
