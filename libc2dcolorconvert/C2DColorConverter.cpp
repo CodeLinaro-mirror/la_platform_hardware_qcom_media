@@ -340,6 +340,7 @@ bool C2DColorConverter::isYUVSurface(ColorConvertFormat format)
         case TP10_UBWC:
         case P010:
         case VENUS_P010:
+        case CbYCrY:
             return true;
         default:
             return false;
@@ -553,6 +554,8 @@ uint32_t C2DColorConverter::getC2DFormat(ColorConvertFormat format, bool isSourc
         case P010:
         case VENUS_P010:
             return C2D_COLOR_FORMAT_420_P010;
+        case CbYCrY:
+            return C2D_COLOR_FORMAT_422_UYVY;
         default:
             ALOGW("%s: Format not supported , %d", __FUNCTION__, format);
             return -1;
@@ -589,6 +592,8 @@ size_t C2DColorConverter::calcStride(ColorConvertFormat format, size_t width)
             return ALIGN(width*2, ALIGN64);
         case VENUS_P010:
             return ALIGN(width*2, ALIGN256);
+        case CbYCrY:
+            return ALIGN(width*2, ALIGN64);
         default:
             ALOGW("%s: Format not supported , %d", __FUNCTION__, format);
             return 0;
@@ -719,6 +724,8 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
             alignedw = ALIGN(width*2, ALIGN256);
             alignedh = ALIGN(height/2, ALIGN16);
             size = ALIGN(size + (alignedw * alignedh), ALIGN4K);
+        case CbYCrY:
+            size = ALIGN(ALIGN(width * 2, ALIGN64) * height, ALIGN4K);
             break;
         default:
             ALOGW("%s: Format not supported , %d", __FUNCTION__, format);
