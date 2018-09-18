@@ -535,6 +535,8 @@ class venc_dev
         unsigned long venc_get_codectype(OMX_VIDEO_CODINGTYPE eCompressionFormat);
         bool venc_set_grid_enable();
         bool venc_set_nal_size (OMX_VIDEO_CONFIG_NALSIZE *nalSizeInfo);
+        bool venc_set_extradata_hdr10metadata();
+        bool venc_store_dynamic_config(OMX_INDEXTYPE type, OMX_PTR config);
 
         OMX_U32 pmem_free();
         OMX_U32 pmem_allocate(OMX_U32 size, OMX_U32 alignment, OMX_U32 count);
@@ -596,6 +598,38 @@ class venc_dev
         bool mUseAVTimerTimestamps;
         bool venc_set_hdr_info(const MasteringDisplay&, const ContentLightLevel&);
         bool mIsGridset;
+        OMX_U32 mUseLinearColorFormat;
+
+        union dynamicConfigData {
+            OMX_VIDEO_CONFIG_BITRATETYPE bitrate;
+            OMX_CONFIG_FRAMERATETYPE framerate;
+            QOMX_VIDEO_INTRAPERIODTYPE intraperiod;
+            OMX_CONFIG_INTRAREFRESHVOPTYPE intravoprefresh;
+            OMX_CONFIG_ROTATIONTYPE rotation;
+            OMX_VIDEO_VP8REFERENCEFRAMETYPE vp8refframe;
+            OMX_QCOM_VIDEO_CONFIG_LTRMARK_TYPE markltr;
+            OMX_QCOM_VIDEO_CONFIG_LTRUSE_TYPE useltr;
+            OMX_VIDEO_CONFIG_DEINTERLACE deinterlace;
+            OMX_SKYPE_VIDEO_CONFIG_QP configqp;
+            OMX_VIDEO_CONFIG_ANDROID_TEMPORALLAYERINGTYPE temporallayer;
+            OMX_SKYPE_VIDEO_CONFIG_BASELAYERPID configbaselayerid;
+        };
+        struct dynamicConfig {
+            OMX_TICKS timestamp;
+            unsigned int type;
+            union dynamicConfigData config_data;
+        };
+        pthread_mutex_t m_configlock;
+        std::list<dynamicConfig> m_configlist;
+        bool handle_dynamic_config(OMX_BUFFERHEADERTYPE *bufferHdr);
+        bool venc_config_bitrate(OMX_VIDEO_CONFIG_BITRATETYPE *bit_rate);
+        bool venc_config_framerate(OMX_CONFIG_FRAMERATETYPE *frame_rate);
+        bool venc_config_intraperiod(QOMX_VIDEO_INTRAPERIODTYPE *intra_period);
+        bool venc_config_intravoprefresh(OMX_CONFIG_INTRAREFRESHVOPTYPE *intra_vop_refresh);
+        bool venc_config_vp8refframe(OMX_VIDEO_VP8REFERENCEFRAMETYPE *vp8refframe);
+        bool venc_config_markLTR(OMX_QCOM_VIDEO_CONFIG_LTRMARK_TYPE *markltr);
+        bool venc_config_useLTR(OMX_QCOM_VIDEO_CONFIG_LTRUSE_TYPE *useltr);
+        bool venc_config_qp(OMX_SKYPE_VIDEO_CONFIG_QP *configqp);
 };
 
 enum instance_state {
