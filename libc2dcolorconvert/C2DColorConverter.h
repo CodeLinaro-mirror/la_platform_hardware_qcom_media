@@ -1,4 +1,5 @@
-/* Copyright (c) 2012 - 2013, 2015, 2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012 - 2013, 2015, 2018, 2022 The Linux Foundation.
+ * All rights reserved.
  *
  * redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,7 +34,11 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <pthread.h>
+
+#ifdef KONA_TODO_UPDATE
 #include <linux/msm_kgsl.h>
+#endif
+
 #include <sys/ioctl.h>
 #include <utils/Log.h>
 #include <dlfcn.h>

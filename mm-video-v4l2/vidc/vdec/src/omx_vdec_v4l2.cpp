@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010 - 2020, The Linux Foundation. All rights reserved.
+Copyright (c) 2010 - 2020, 2022 The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -1074,8 +1074,11 @@ omx_vdec::~omx_vdec()
     m_perf_control.perf_lock_release();
 }
 
+#ifdef KONA_TODO_UPDATE
 OMX_ERRORTYPE omx_vdec::set_dpb(bool is_split_mode)
 {
+
+    /* DPB decision happens in kernel */
     int rc = 0;
     struct v4l2_ext_control ctrl[1];
     struct v4l2_ext_controls controls;
@@ -1201,6 +1204,7 @@ OMX_ERRORTYPE omx_vdec::decide_dpb_buffer_mode()
 
     return eRet;
 }
+#endif
 
 bool omx_vdec::check_supported_flexible_formats(OMX_COLOR_FORMATTYPE required_format)
 {
@@ -1215,6 +1219,8 @@ bool omx_vdec::check_supported_flexible_formats(OMX_COLOR_FORMATTYPE required_fo
     }
 }
 
+#ifdef KONA_TODO_UPDATE
+// TODO: Delete downscalar for decoder
 int omx_vdec::enable_downscalar()
 {
     int rc = 0;
@@ -1414,6 +1420,7 @@ int omx_vdec::decide_downscalar()
 
     return rc;
 }
+#endif
 
 /* ======================================================================
    FUNCTION
@@ -2586,9 +2593,10 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
             m_decoder_capability.max_height = frmsize.stepwise.max_height;
         }
 
+#ifdef KONA_TODO_UPDATE
         /* Based on UBWC enable, decide split mode to driver before calling S_FMT */
         eRet = set_dpb(m_disable_ubwc_mode);
-
+#endif
         memset(&fmt, 0x0, sizeof(struct v4l2_format));
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         fmt.fmt.pix_mp.height = drv_ctx.video_resolution.frame_height;
@@ -2634,12 +2642,17 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
         drv_ctx.interlace = VDEC_InterlaceFrameProgressive;
         drv_ctx.extradata = 0;
         drv_ctx.picture_order = VDEC_ORDER_DISPLAY;
+
+#ifdef KONA_TODO_UPDATE
+        /* use DECODE_ORDER */
         control.id = V4L2_CID_MPEG_VIDC_VIDEO_OUTPUT_ORDER;
         control.value = V4L2_MPEG_VIDC_VIDEO_OUTPUT_ORDER_DISPLAY;
+
         ret = ioctl(drv_ctx.video_driver_fd, VIDIOC_S_CTRL, &control);
         drv_ctx.idr_only_decoding = 0;
 
 #ifdef _ANDROID_
+        /* We need to delete FRAME_RATE */
         if (m_dec_hfr_fps) {
             memset(&query, 0, sizeof(struct v4l2_queryctrl));
 
@@ -2650,8 +2663,8 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
 
             DEBUG_PRINT_HIGH("Updated HFR fps value = %d", m_dec_hfr_fps);
         }
-
 #endif
+#endif // KONA_TODO_UPDATE
         m_state = OMX_StateLoaded;
 
         unsigned long long extradata_mask = DEFAULT_EXTRADATA;
@@ -3200,11 +3213,14 @@ OMX_ERRORTYPE  omx_vdec::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
                 BITMASK_SET(&m_flags, OMX_COMPONENT_OUTPUT_ENABLE_PENDING);
                 // Skip the event notification
                 bFlag = 0;
+#ifdef KONA_TODO_UPDATE
+                // TODO: Delete downscalar
                 /* enable/disable downscaling if required */
                 ret = decide_downscalar();
                 if (ret) {
                     DEBUG_PRINT_LOW("decide_downscalar failed\n");
                 }
+#endif
             }
         }
     } else if (cmd == OMX_CommandPortDisable) {
@@ -3596,10 +3612,10 @@ OMX_ERRORTYPE omx_vdec::get_supported_profile_level(OMX_VIDEO_PARAM_PROFILELEVEL
         level_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_VP8_PROFILE_LEVEL;
     } else if (output_capability == V4L2_PIX_FMT_VP9) {
         level_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_VP9_LEVEL;
-        profile_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_VP9_PROFILE;
+        profile_cap.id = V4L2_CID_MPEG_VIDEO_VP9_PROFILE;
     } else if (output_capability == V4L2_PIX_FMT_HEVC) {
-        level_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_HEVC_TIER_LEVEL;
-        profile_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_HEVC_PROFILE;
+        level_cap.id = V4L2_CID_MPEG_VIDEO_HEVC_TIER;
+        profile_cap.id = V4L2_CID_MPEG_VIDEO_HEVC_PROFILE;
     } else if (output_capability == V4L2_PIX_FMT_MPEG2) {
         level_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_MPEG2_LEVEL;
         profile_cap.id = V4L2_CID_MPEG_VIDC_VIDEO_MPEG2_PROFILE;
@@ -3690,11 +3706,11 @@ OMX_ERRORTYPE omx_vdec::get_supported_profile_level(OMX_VIDEO_PARAM_PROFILELEVEL
     }else if(output_capability == V4L2_PIX_FMT_HEVC) { //convert omx profile to v4l2 profile for HEVC Main10 and Main10HDR10 profiles,seperately
         switch (profileLevelType->eProfile) {
             case OMX_VIDEO_HEVCProfileMain:
-                v4l2_profile = V4L2_MPEG_VIDC_VIDEO_HEVC_PROFILE_MAIN;
+                v4l2_profile = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
                 break;
             case OMX_VIDEO_HEVCProfileMain10:
             case OMX_VIDEO_HEVCProfileMain10HDR10:
-                v4l2_profile = V4L2_MPEG_VIDC_VIDEO_HEVC_PROFILE_MAIN10;
+                v4l2_profile = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
                 break;
             default:
                 DEBUG_PRINT_ERROR("Invalid profile, cannot find corresponding omx profile");
@@ -3703,11 +3719,11 @@ OMX_ERRORTYPE omx_vdec::get_supported_profile_level(OMX_VIDEO_PARAM_PROFILELEVEL
     }else { //convert omx profile to v4l2 profile for VP9 Profile2 and VP9 Profile2HDR profiles,seperately
         switch (profileLevelType->eProfile) {
             case OMX_VIDEO_VP9Profile0:
-                v4l2_profile = V4L2_MPEG_VIDC_VIDEO_VP9_PROFILE_P0;
+                v4l2_profile = V4L2_MPEG_VIDEO_VP9_PROFILE_0;
                 break;
             case OMX_VIDEO_VP9Profile2:
             case OMX_VIDEO_VP9Profile2HDR:
-                v4l2_profile = V4L2_MPEG_VIDC_VIDEO_VP9_PROFILE_P2_10;
+                v4l2_profile = V4L2_MPEG_VIDEO_VP9_PROFILE_2;
                 break;
             default:
                 DEBUG_PRINT_ERROR("Invalid profile, cannot find corresponding omx profile");
@@ -5063,6 +5079,8 @@ OMX_ERRORTYPE  omx_vdec::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
             }
             break;
         }
+#ifdef KONA_TODO_UPDATE
+        // TODO: Delete downscalar for decoder
         case OMX_QcomIndexParamVideoDownScalar:
         {
             VALIDATE_OMX_PARAM_DATA(paramData, QOMX_INDEXDOWNSCALAR);
@@ -5088,6 +5106,7 @@ OMX_ERRORTYPE  omx_vdec::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
             }
             break;
         }
+#endif
 #ifdef ADAPTIVE_PLAYBACK_SUPPORTED
         case OMX_QcomIndexParamVideoAdaptivePlaybackMode:
         {
@@ -7669,7 +7688,7 @@ OMX_ERRORTYPE  omx_vdec::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
     buf.timestamp.tv_sec = buffer->nTimeStamp / 1000000;
     buf.timestamp.tv_usec = (buffer->nTimeStamp % 1000000);
     buf.flags |= (buffer->nFlags & OMX_BUFFERFLAG_CODECCONFIG) ? V4L2_QCOM_BUF_FLAG_CODECCONFIG: 0;
-#if NEED_TO_REVISIT
+#ifdef KONA_TODO_UPDATE
     buf.flags |= (buffer->nFlags & OMX_BUFFERFLAG_DECODEONLY) ? V4L2_QCOM_BUF_FLAG_DECODEONLY: 0;
 #endif
 
@@ -9020,7 +9039,7 @@ int omx_vdec::async_message_process (void *context, void* message)
                    } else {
                        omxhdr->nFlags &= ~OMX_BUFFERFLAG_SYNCFRAME;
                    }
-#if NEED_TO_REVISIT
+#ifdef KONA_TODO_UPDATE
                    if (v4l2_buf_ptr->flags & V4L2_QCOM_BUF_FLAG_DECODEONLY) {
                        omxhdr->nFlags |= OMX_BUFFERFLAG_DECODEONLY;
                    }
@@ -11745,7 +11764,7 @@ OMX_ERRORTYPE omx_vdec::enable_extradata(OMX_U64 requested_extradata,
                 }
             }
         }
-#if NEED_TO_REVISIT
+#ifdef KONA_TODO_UPDATE
         if (requested_extradata & OMX_QP_EXTRADATA) {
             control.id = V4L2_CID_MPEG_VIDC_VIDEO_EXTRADATA;
             control.value = V4L2_MPEG_VIDC_EXTRADATA_FRAME_QP;
