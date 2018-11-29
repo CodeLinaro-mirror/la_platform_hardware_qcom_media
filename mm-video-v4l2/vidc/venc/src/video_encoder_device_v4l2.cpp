@@ -356,10 +356,10 @@ void* venc_dev::async_venc_message_thread (void *input)
                     venc_msg.buf.flags |= OMX_VIDEO_PictureTypeB;
                 }
 
-                if (v4l2_buf.flags & V4L2_QCOM_BUF_FLAG_CODECCONFIG)
+                if (v4l2_buf.flags & V4L2_BUF_FLAG_CODECCONFIG)
                     venc_msg.buf.flags |= OMX_BUFFERFLAG_CODECCONFIG;
 
-                if (v4l2_buf.flags & V4L2_QCOM_BUF_FLAG_EOS)
+                if (v4l2_buf.flags & V4L2_BUF_FLAG_EOS)
                     venc_msg.buf.flags |= OMX_BUFFERFLAG_EOS;
 
                 if (omx->handle->num_output_planes > 1 && v4l2_buf.m.planes->bytesused)
@@ -722,14 +722,18 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
             data->nVersion.nVersion = OMX_SPEC_VERSION;
             data->nPortIndex = 0;
             data->eType = (OMX_EXTRADATATYPE)MSM_VIDC_EXTRADATA_INDEX;
+#ifdef KONA_TODO_UPDATE
             data->nDataSize = sizeof(struct msm_vidc_input_crop_payload);
+#endif
             framedimension_format = (OMX_QCOM_EXTRADATA_FRAMEDIMENSION *)p_extra->data;
             payload = (struct msm_vidc_extradata_index *)(data->data);
+#ifdef KONA_TODO_UPDATE
             payload->type = MSM_VIDC_EXTRADATA_INPUT_CROP;
             payload->input_crop.left = framedimension_format->nDecWidth;
             payload->input_crop.top = framedimension_format->nDecHeight;
             payload->input_crop.width = framedimension_format->nActualWidth;
             payload->input_crop.height = framedimension_format->nActualHeight;
+#endif
             DEBUG_PRINT_LOW("Height = %d Width = %d Actual Height = %d Actual Width = %d",
                 framedimension_format->nDecWidth, framedimension_format->nDecHeight,
                 framedimension_format->nActualWidth, framedimension_format->nActualHeight);
@@ -1060,6 +1064,7 @@ bool venc_dev::handle_output_extradata(void *buffer, int index)
         }
 
         switch (p_extradata->type) {
+#ifdef KONA_TODO_UPDATE
             case MSM_VIDC_EXTRADATA_METADATA_MBI:
             {
                 append_extradata_mbidata(p_extra, p_extradata);
@@ -1078,6 +1083,7 @@ bool venc_dev::handle_output_extradata(void *buffer, int index)
                 DEBUG_PRINT_LOW("LTRInfo Extradata = 0x%x", *((OMX_U32 *)p_extra->data));
                 break;
             }
+#endif
             case MSM_VIDC_EXTRADATA_NONE:
                 append_extradata_none(p_extra);
                 if(p_clientextra) {
@@ -2953,6 +2959,7 @@ bool venc_dev::venc_set_param(void *paramData, OMX_INDEXTYPE index)
                 }
                 break;
             }
+#ifdef KONA_TODO_UPDATE
         case OMX_IndexParamAndroidVideoTemporalLayering:
             {
                 OMX_VIDEO_PARAM_ANDROID_TEMPORALLAYERINGTYPE hierData;
@@ -2967,6 +2974,7 @@ bool venc_dev::venc_set_param(void *paramData, OMX_INDEXTYPE index)
 
                 break;
             }
+#endif
         case OMX_QTIIndexParamDisablePQ:
             {
                 QOMX_DISABLETYPE * pParam = (QOMX_DISABLETYPE *)paramData;
@@ -3251,7 +3259,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                         temporalParams.nBitrateRatios[i] = pParam->nBitrateRatios[i];
                     }
                 }
-
+#ifdef KONA_TODO_UPDATE
                 if (!venc_validate_temporal_extn(temporalParams)) {
                     DEBUG_PRINT_ERROR("set_param: Failed to validate temporal settings");
                     return false;
@@ -3264,7 +3272,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                     DEBUG_PRINT_ERROR("Reconfiguring temporal settings failed");
                     return false;
                 }
-
+#endif
                 break;
             }
         case OMX_QcomIndexConfigBaseLayerId:
@@ -3774,14 +3782,14 @@ unsigned venc_dev::venc_start(void)
         DEBUG_PRINT_ERROR("Reconfiguring intra period failed");
         return 1;
     }
-
+#ifdef KONA_TODO_UPDATE
     // re-configure the temporal layers as RC-mode and key-frame interval
     // might have changed since the client last configured the layers.
     if (!venc_reconfigure_temporal_settings()) {
         DEBUG_PRINT_ERROR("Reconfiguring temporal settings failed");
         return 1;
     }
-
+#endif
     // Note HP settings could change GOP structure
     if (!venc_set_intra_period(intra_period.num_pframes, intra_period.num_bframes)) {
         DEBUG_PRINT_ERROR("TemporalLayer: Failed to set nPframes/nBframes");
@@ -4002,8 +4010,8 @@ unsigned venc_dev::venc_flush( unsigned port)
         fd_list[i] = 0;
     }
 
-    enc.cmd = V4L2_QCOM_CMD_FLUSH;
-    enc.flags = V4L2_QCOM_CMD_FLUSH_OUTPUT | V4L2_QCOM_CMD_FLUSH_CAPTURE;
+    enc.cmd = V4L2_CMD_FLUSH;
+    enc.flags = V4L2_CMD_FLUSH_OUTPUT | V4L2_CMD_FLUSH_CAPTURE;
 
     if (ioctl(m_nDriver_fd, VIDIOC_ENCODER_CMD, &enc)) {
         DEBUG_PRINT_ERROR("Flush Port (%d) Failed ", port);
@@ -4546,7 +4554,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                     uint32_t encodePerfMode = 0;
                     if (getMetaData(handle, GET_VIDEO_PERF_MODE, &encodePerfMode) == 0) {
                         if (encodePerfMode == OMX_TRUE) {
-                            buf.flags |= V4L2_QCOM_BUF_FLAG_PERF_MODE;
+                            buf.flags |= V4L2_BUF_FLAG_PERF_MODE;
                         }
                         // Clear SET_VIDEO_PERF_MODE in buffer handle
                         setMetaData(handle, SET_VIDEO_PERF_MODE, 0);
@@ -4640,10 +4648,10 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
     VIDC_TRACE_INT_LOW("ETB-TS", bufhdr->nTimeStamp / 1000);
 
     if (bufhdr->nFlags & OMX_BUFFERFLAG_EOS)
-        buf.flags |= V4L2_QCOM_BUF_FLAG_EOS;
+        buf.flags |= V4L2_BUF_FLAG_EOS;
 
     if (!plane[0].bytesused) {
-        if (buf.flags & V4L2_QCOM_BUF_FLAG_EOS) {
+        if (buf.flags & V4L2_BUF_FLAG_EOS) {
             DEBUG_PRINT_ERROR("venc_empty_buf: Zero length EOS buffers are not valid");
             DEBUG_PRINT_ERROR("Use this function instead : venc_handle_empty_eos_buffer");
             return false;
@@ -4810,7 +4818,7 @@ bool venc_dev::venc_empty_batch(OMX_BUFFERHEADERTYPE *bufhdr, unsigned index)
             }
 
             if (bufhdr->nFlags & OMX_BUFFERFLAG_EOS)
-                buf.flags |= V4L2_QCOM_BUF_FLAG_EOS;
+                buf.flags |= V4L2_BUF_FLAG_EOS;
 #ifdef KONA_TODO_UPDATE
             if (i != numBufs - 1) {
                 buf.flags |= V4L2_MSM_BUF_FLAG_DEFER;
@@ -7703,6 +7711,7 @@ bool venc_dev::BatchInfo::isPending(int bufferId) {
 bool venc_dev::venc_set_hdr_info(const MasteringDisplay& mastering_disp_info,
                             const ContentLightLevel& content_light_level_info)
 {
+#ifdef KONA_TODO_UPDATE
     struct v4l2_ext_control ctrl[13];
     struct v4l2_ext_controls controls;
     const unsigned int RGB_PRIMARY_TABLE[] = {
@@ -7775,7 +7784,10 @@ bool venc_dev::venc_set_hdr_info(const MasteringDisplay& mastering_disp_info,
         DEBUG_PRINT_ERROR("VIDIOC_S_EXT_CTRLS failed for HDR Info : CLL SEI");
         return false;
     }
-
+#else
+    (void) mastering_disp_info;
+    (void) content_light_level_info;
+#endif
     return true;
 }
 
