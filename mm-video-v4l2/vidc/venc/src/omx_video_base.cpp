@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2019, Linux Foundation. All rights reserved.
+Copyright (c) 2010-2019, 2022 Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -2062,21 +2062,6 @@ OMX_ERRORTYPE  omx_video::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 DEBUG_PRINT_LOW("get_parameter: OMX_QcomIndexParamH264VUITimingInfo");
                 if (!dev_get_vui_timing_info(&enabled)) {
                     DEBUG_PRINT_ERROR("Invalid entry returned from get_vui_Timing_info %d",
-                        pParam->bEnable);
-                } else {
-                    pParam->bEnable = (OMX_BOOL)enabled;
-                }
-                break;
-            }
-        case OMX_QTIIndexParamVQZIPSEIType:
-            {
-                VALIDATE_OMX_PARAM_DATA(paramData, OMX_QTI_VIDEO_PARAM_VQZIP_SEI_TYPE);
-                OMX_U32 enabled;
-                OMX_QTI_VIDEO_PARAM_VQZIP_SEI_TYPE *pParam =
-                    reinterpret_cast<OMX_QTI_VIDEO_PARAM_VQZIP_SEI_TYPE*>(paramData);
-                DEBUG_PRINT_LOW("get_parameter: OMX_QTIIndexParamVQZIPSEIType");
-                if (!dev_get_vqzip_sei_info(&enabled)) {
-                    DEBUG_PRINT_ERROR("Invalid entry returned from get_vqzip_sei_type %d",
                         pParam->bEnable);
                 } else {
                     pParam->bEnable = (OMX_BOOL)enabled;

@@ -28,7 +28,6 @@ TARGETS_THAT_DONT_SUPPORT_SW_VENC_ROTATION := msm8226 msm8916 msm8992 msm8996 sd
 TARGETS_THAT_DONT_SUPPORT_SW_VENC_720P = atoll
 
 TARGETS_THAT_NEED_SW_VENC_HEVC := msm8992
-TARGETS_THAT_SUPPORT_VQZIP := msm8996 msm8998
 
 ifeq ($(call is-board-platform-in-list, $(TARGETS_THAT_DONT_SUPPORT_SW_VENC_720P)),true)
 libmm-venc-def += -DDISABLE_720P
@@ -39,10 +38,6 @@ libmm-venc-def += -D_MSM8610_
 endif
 
 libmm-venc-def += -D_UBWC_
-
-ifeq ($(call is-board-platform-in-list, $(TARGETS_THAT_SUPPORT_VQZIP)),true)
-libmm-venc-def += -D_VQZIP_
-endif
 
 ifeq ($(call is-board-platform-in-list, $(TARGETS_THAT_USE_FLAG_MSM8226)),true)
 libmm-venc-def += -D_MSM8226_
@@ -73,7 +68,6 @@ libmm-venc-inc      += hardware/qcom/media/libstagefrighthw
 libmm-venc-inc      += hardware/qcom/media/libplatformconfig
 libmm-venc-inc      += $(TARGET_OUT_HEADERS)/adreno
 libmm-venc-inc      += hardware/qcom/media/libc2dcolorconvert
-libmm-venc-inc      += $(TARGET_OUT_HEADERS)/libvqzip
 libmm-venc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativewindow/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativebase/include
