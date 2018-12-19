@@ -398,9 +398,6 @@ class omx_video: public qc_omx_component
 
         Signal signal;
 
-        bool reject_param_for_TME_mode(int index);
-        bool reject_config_for_TME_mode(int index);
-
         pthread_t msg_thread_id;
         pthread_t async_thread_id;
         bool async_thread_created;
@@ -685,8 +682,6 @@ class omx_video: public qc_omx_component
         OMX_VIDEO_PARAM_VP8TYPE m_sParamVP8;
         OMX_VIDEO_PARAM_ANDROID_VP8ENCODERTYPE m_sParamVP8Encoder;
         OMX_VIDEO_PARAM_HEVCTYPE m_sParamHEVC;
-        QOMX_VIDEO_PARAM_TMETYPE m_sParamTME;
-        OMX_U32 tme_payload_version;
         OMX_PORT_PARAM_TYPE m_sPortParam_img;
         OMX_PORT_PARAM_TYPE m_sPortParam_audio;
         OMX_VIDEO_CONFIG_BITRATETYPE m_sConfigBitrate;
