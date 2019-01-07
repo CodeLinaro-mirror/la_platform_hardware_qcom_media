@@ -81,3 +81,18 @@ libOmxVdec_la_LDFLAGS = -module -shared -avoid-version
 libOmxVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lqdMetaData
 libOmxVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig
 libOmxVdec_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
+
+if BUILD_SWCODEC
+lib_LTLIBRARIES += libOmxSwVdec.la
+c1_sources = src/omx_swvdec.cpp
+c1_sources += src/omx_swvdec_utils.cpp
+c1_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_common.cpp
+c1_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_vendor_extensions.cpp
+
+libOmxSwVdec_la_SOURCES = $(c1_sources)
+libOmxSwVdec_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
+libOmxSwVdec_la_LDFLAGS = -module -shared -avoid-version
+libOmxSwVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lqdMetaData -lswvdec
+libOmxSwVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert
+libOmxSwVdec_la_LDFLAGS += -lc2dcolorconvert
+endif

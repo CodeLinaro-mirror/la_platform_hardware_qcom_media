@@ -106,6 +106,11 @@ AC_ARG_ENABLE([target-output-deinterlaced],
                 [Enable conditional compile for target target output deinterlaced [default=no]]),
         [target_output_deinterlaced="${enableval}"])
 
+AC_ARG_ENABLE([build-swcodec],
+        AC_HELP_STRING([--enable-swcodec],
+                [Enable conditional compile for build software codec [default=no]]),
+        [build_swcodec="${enableval}"])
+
 AC_ARG_WITH([sanitized-headers],
         [AS_HELP_STRING([--with-sanitized-headers=DIR],[location of the sanitized Linux kernel headers])],
         [CPPFLAGS="$CPPFLAGS -I $withval"])
@@ -181,6 +186,7 @@ AM_CONDITIONAL(MASTER_SIDE_CP_TARGET_LIST, [test "x$master_side_cp_target_list" 
 AM_CONDITIONAL(USE_GLIB, [test "x$use_glib" = "xyes"])
 AM_CONDITIONAL(BUILD_MM_VIDEO, [test "x$build_mm_video" = "xyes"])
 AM_CONDITIONAL(TARGET_OUTPUT_DEINTERLACED, [test "x$target_output_deinterlaced" = "xyes"])
+AM_CONDITIONAL(BUILD_SWCODEC, [test "x$build_swcodec" = "xyes"])
 
 AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],

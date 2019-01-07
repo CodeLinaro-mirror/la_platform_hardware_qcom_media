@@ -23,6 +23,8 @@ AM_CPPFLAGS += -DUSE_ION
 AM_CPPFLAGS += -Wno-enum-compare
 #AM_CPPFLAGS += "-include stdint.h"
 AM_CPPFLAGS += "-Dstrlcpy=g_strlcpy"
+AM_CPPFLAGS += -D_LINUX_
+
 AM_CPPFLAGS += "-Dstrlcat=g_strlcat"
 AM_CPPFLAGS += "-std=c++11"
 AM_CPPFLAGS += -Wno-undef
@@ -83,3 +85,18 @@ libOmxVenc_la_LDFLAGS += -lstdc++ -lpthread -llog -lutils -lcutils -lglib-2.0 -l
 
 libOmxVenc_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig
 libOmxVenc_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
+
+if BUILD_SWCODEC
+lib_LTLIBRARIES += libOmxSwVencMpeg4.la
+c1_sources = src/omx_video_base.cpp
+c1_sources += src/omx_swvenc_mpeg4.cpp
+c1_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_common.cpp
+c1_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_vendor_extensions.cpp
+
+libOmxSwVencMpeg4_la_SOURCES = $(c1_sources)
+libOmxSwVencMpeg4_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
+libOmxSwVencMpeg4_la_LDFLAGS = -module -shared -avoid-version
+libOmxSwVencMpeg4_la_LDFLAGS += -llog  -lcutils -lui -lglib-2.0 -lion -lqdMetaData -lMpeg4SwEncoder
+libOmxSwVencMpeg4_la_LDFLAGS += -L$(top_builddir)/libplatformconfig -L$(top_builddir)/libc2dcolorconvert
+libOmxSwVencMpeg4_la_LDFLAGS += -lplatformconfig  -lc2dcolorconvert
+endif
