@@ -204,7 +204,7 @@ extern "C" {
 #define DESC_BUFFER_SIZE (8192 * 16)
 
 #ifdef _ANDROID_
-#define MAX_NUM_INPUT_OUTPUT_BUFFERS 64
+#define MAX_NUM_INPUT_OUTPUT_BUFFERS VIDEO_MAX_FRAME
 #endif
 
 // Aligning to MAX NUM INPUT & OUTPUT
@@ -466,6 +466,7 @@ struct vdec_ion {
     int dev_fd;
     struct ion_allocation_data alloc_data;
     int data_fd;
+    char *uaddr;
 };
 #endif
 
@@ -482,11 +483,9 @@ struct vdec_gbm {
 
 struct extradata_buffer_info {
     unsigned long buffer_size;
-    char* uaddr;
     int count;
-    int size;
 #ifdef USE_ION
-    struct vdec_ion ion;
+    struct vdec_ion ion[VIDEO_MAX_FRAME];
 #endif
 };
 
