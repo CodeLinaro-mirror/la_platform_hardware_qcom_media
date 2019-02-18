@@ -871,6 +871,9 @@ class omx_vdec: public qc_omx_component
         bool handle_content_light_level_info(void* data);
         bool handle_mastering_display_color_info(void* data);
         OMX_ERRORTYPE enable_extradata(OMX_U64 requested_extradata);
+#ifdef USE_GBM
+        void set_color_meta_data_in_bo(ColorMetaData *color_mdata, unsigned int buf_index);
+#endif
         OMX_ERRORTYPE update_portdef(OMX_PARAM_PORTDEFINITIONTYPE *portDefn);
         void fix_drv_output_format();
         void insert_demux_addr_offset(OMX_U32 address_offset);
