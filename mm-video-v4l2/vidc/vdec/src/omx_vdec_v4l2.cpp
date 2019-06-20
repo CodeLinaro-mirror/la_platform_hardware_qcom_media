@@ -4429,8 +4429,14 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
         *omx_base_address = (OMX_BUFFERHEADERTYPE  *)calloc(nBufHdrSize,1);
         // Alloc mem for platform specific info
         char *pPtr=NULL;
-        pPtr = (char*) calloc(nPlatformListSize + nPlatformEntrySize +
-                nPMEMInfoSize,1);
+        if (intermediate == false) {
+            pPtr = (char*) calloc(nPlatformListSize + nPlatformEntrySize +
+                   nPMEMInfoSize,1);
+            if (!pPtr) {
+                DEBUG_PRINT_ERROR("Failed to calloc pPtr for OMX_QCOM_PLATFORM_PRIVATE_ENTRY");
+                return OMX_ErrorInsufficientResources;
+            }
+        }
         *omx_ptr_outputbuffer = (struct vdec_bufferpayload *)    \
                        calloc (sizeof(struct vdec_bufferpayload),
                                drv_ctx.op_buf.actualcount);
@@ -4439,7 +4445,10 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
                              drv_ctx.op_buf.actualcount);
         if (!*omx_ptr_outputbuffer || !*omx_ptr_respbuffer) {
             DEBUG_PRINT_ERROR("Failed to alloc outputbuffer or respbuffer ");
-            free(pPtr);
+            if (intermediate == false) {
+                if (pPtr)
+                    free(pPtr);
+            }
             return OMX_ErrorInsufficientResources;
         }
 
@@ -4451,10 +4460,12 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
                  DEBUG_PRINT_ERROR("Failed to alloc op_buf_gbm_info");
             return OMX_ErrorInsufficientResources;
         }
-        drv_ctx.gbm_device_fd = open("/dev/dri/renderD128", O_RDWR | O_CLOEXEC);
-        if (drv_ctx.gbm_device_fd < 0) {
-           DEBUG_PRINT_ERROR("opening dri device for gbm failed with fd = %d", drv_ctx.gbm_device_fd);
-           return OMX_ErrorInsufficientResources;
+        if (intermediate == false) {
+            drv_ctx.gbm_device_fd = open("/dev/dri/renderD128", O_RDWR | O_CLOEXEC);
+            if (drv_ctx.gbm_device_fd < 0) {
+                DEBUG_PRINT_ERROR("opening dri device for gbm failed with fd = %d", drv_ctx.gbm_device_fd);
+                return OMX_ErrorInsufficientResources;
+            }
         }
 #elif defined USE_ION
         *omx_op_buf_ion_info = (struct vdec_ion *)\
@@ -4466,21 +4477,22 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
         }
 #endif
 
-        if (*omx_base_address && pPtr && *omx_ptr_outputbuffer
+        if (*omx_base_address  && *omx_ptr_outputbuffer
             && *omx_ptr_respbuffer) {
             bufHdr          =  *omx_base_address;
-            if (m_platform_list) {
-                free(m_platform_list);
+            if (intermediate == false) {
+               if (m_platform_list) {
+                  free(m_platform_list);
+               }
+               m_platform_list = (OMX_QCOM_PLATFORM_PRIVATE_LIST *)(pPtr);
+               m_platform_entry= (OMX_QCOM_PLATFORM_PRIVATE_ENTRY *)
+                    (((char *) m_platform_list)  + nPlatformListSize);
+               m_pmem_info     = (OMX_QCOM_PLATFORM_PRIVATE_PMEM_INFO *)
+                    (((char *) m_platform_entry) + nPlatformEntrySize);
+               pPlatformList   = m_platform_list;
+               pPlatformEntry  = m_platform_entry;
+               pPMEMInfo       = m_pmem_info;
             }
-            m_platform_list = (OMX_QCOM_PLATFORM_PRIVATE_LIST *)(pPtr);
-            m_platform_entry= (OMX_QCOM_PLATFORM_PRIVATE_ENTRY *)
-                (((char *) m_platform_list)  + nPlatformListSize);
-            m_pmem_info     = (OMX_QCOM_PLATFORM_PRIVATE_PMEM_INFO *)
-                (((char *) m_platform_entry) + nPlatformEntrySize);
-            pPlatformList   = m_platform_list;
-            pPlatformEntry  = m_platform_entry;
-            pPMEMInfo       = m_pmem_info;
-
             DEBUG_PRINT_LOW("Memory Allocation Succeeded for OUT port%p", *omx_base_address);
 
             // Settting the entire storage nicely
@@ -4495,26 +4507,30 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
                 // Platform specific PMEM Information
                 // Initialize the Platform Entry
                 //DEBUG_PRINT_LOW("Initializing the Platform Entry for %d",i);
-                pPlatformEntry->type       = OMX_QCOM_PLATFORM_PRIVATE_PMEM;
-                pPlatformEntry->entry      = pPMEMInfo;
-                // Initialize the Platform List
-                pPlatformList->nEntries    = 1;
-                pPlatformList->entryList   = pPlatformEntry;
+                if (intermediate == false) {
+                   pPlatformEntry->type       = OMX_QCOM_PLATFORM_PRIVATE_PMEM;
+                   pPlatformEntry->entry      = pPMEMInfo;
+                   // Initialize the Platform List
+                   pPlatformList->nEntries    = 1;
+                   pPlatformList->entryList   = pPlatformEntry;
+                   pPMEMInfo->offset = 0;
+                   pPMEMInfo->pmem_fd = -1;
+                   bufHdr->pPlatformPrivate = pPlatformList;
+                }
                 // Keep pBuffer NULL till vdec is opened
                 bufHdr->pBuffer            = NULL;
                 bufHdr->nOffset            = 0;
-                pPMEMInfo->offset = 0;
-                pPMEMInfo->pmem_fd = -1;
-                bufHdr->pPlatformPrivate = pPlatformList;
                 /*Create a mapping between buffers*/
                 bufHdr->pOutputPortPrivate = &(*omx_ptr_respbuffer)[i];
                 (*omx_ptr_respbuffer)[i].client_data = (void *) \
                     &(*omx_ptr_outputbuffer)[i];
                 // Move the buffer and buffer header pointers
                 bufHdr++;
-                pPMEMInfo++;
-                pPlatformEntry++;
-                pPlatformList++;
+                if (intermediate == false) {
+                   pPMEMInfo++;
+                   pPlatformEntry++;
+                   pPlatformList++;
+                }
             }
         } else {
             DEBUG_PRINT_ERROR("Output buf mem alloc failed[0x%p][0x%p]",\
@@ -4625,18 +4641,20 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
             }
             (*omx_ptr_outputbuffer)[i].pmem_fd = pmem_fd;
 #ifdef USE_GBM
-            m_pmem_info[i].pmeta_fd = pmeta_fd;
+            if (intermediate == false)
+               m_pmem_info[i].pmeta_fd = pmeta_fd;
 #endif
             (*omx_ptr_outputbuffer)[i].offset = 0;
             (*omx_ptr_outputbuffer)[i].bufferaddr = pmem_baseaddress;
             (*omx_ptr_outputbuffer)[i].mmaped_size = bytes;
             (*omx_ptr_outputbuffer)[i].buffer_len = bytes;
-            m_pmem_info[i].pmem_fd = pmem_fd;
-            m_pmem_info[i].size = (*omx_ptr_outputbuffer)[i].buffer_len;
-            m_pmem_info[i].mapped_size = (*omx_ptr_outputbuffer)[i].mmaped_size;
-            m_pmem_info[i].buffer = (*omx_ptr_outputbuffer)[i].bufferaddr;
-            m_pmem_info[i].offset = (*omx_ptr_outputbuffer)[i].offset;
-
+            if (intermediate == false) {
+               m_pmem_info[i].pmem_fd = pmem_fd;
+               m_pmem_info[i].size = (*omx_ptr_outputbuffer)[i].buffer_len;
+               m_pmem_info[i].mapped_size = (*omx_ptr_outputbuffer)[i].mmaped_size;
+               m_pmem_info[i].buffer = (*omx_ptr_outputbuffer)[i].bufferaddr;
+               m_pmem_info[i].offset = (*omx_ptr_outputbuffer)[i].offset;
+            }
             *bufferHdr = (*omx_base_address + i );
             if (secure_mode) {
 #ifdef USE_GBM
@@ -8486,6 +8504,9 @@ bool omx_vdec::allocate_color_convert_buf::update_buffer_req()
             (ColorFormat != OMX_COLOR_FormatYUV420Planar &&
              ColorFormat != OMX_COLOR_FormatYUV420SemiPlanar &&
              ColorFormat != OMX_COLOR_Format16bitRGB565 &&
+#ifdef _OUTPUT_DEINTERLACED_
+             ColorFormat != (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed &&
+#endif
              ColorFormat != (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m)) {
             DEBUG_PRINT_ERROR("update_buffer_req: Unsupported color conversion");
             status = false;
@@ -8586,6 +8607,14 @@ bool omx_vdec::allocate_color_convert_buf::set_color_format(
             status = false;
             enable_color_conversion(false);
         }
+#ifdef _OUTPUT_DEINTERLACED_
+    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&
+             dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed) {
+             DEBUG_PRINT_LOW("enable C2D for nv12+interlaced picture");
+             ColorFormat = dest_color_format;
+             dest_format = NV12_UBWC;
+             enable_color_conversion(true);
+#endif
     } else {
         enable_color_conversion(false);
     }
@@ -8736,6 +8765,9 @@ bool omx_vdec::allocate_color_convert_buf::get_color_format(OMX_COLOR_FORMATTYPE
         if (ColorFormat == OMX_COLOR_FormatYUV420Planar ||
             ColorFormat == OMX_COLOR_FormatYUV420SemiPlanar ||
             ColorFormat == OMX_COLOR_Format16bitRGB565 ||
+#ifdef _OUTPUT_DEINTERLACED_
+            ColorFormat == (OMX_COLOR_FORMATTYPE) QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed ||
+#endif
             ColorFormat == (OMX_COLOR_FORMATTYPE) QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m) {
             dest_color_format = ColorFormat;
         } else {
