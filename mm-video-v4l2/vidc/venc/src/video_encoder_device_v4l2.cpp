@@ -4347,6 +4347,11 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
         }
     }
 
+    if (!handle_dynamic_config(bufhdr)) {
+        DEBUG_PRINT_ERROR("%s Failed to set dynamic configs", __func__);
+        return false;
+    }
+
     if (!streaming[OUTPUT_PORT] &&
         (m_sVenc_cfg.inputformat != V4L2_PIX_FMT_NV12_TP10_UBWC &&
          m_sVenc_cfg.inputformat != V4L2_PIX_FMT_NV12_P010_UBWC &&
@@ -4396,11 +4401,6 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
 
     if (!handle_input_extradata(buf)) {
         DEBUG_PRINT_ERROR("%s Failed to handle input extradata", __func__);
-        return false;
-    }
-
-    if (!handle_dynamic_config(bufhdr)) {
-        DEBUG_PRINT_ERROR("%s Failed to set dynamic configs", __func__);
         return false;
     }
 
