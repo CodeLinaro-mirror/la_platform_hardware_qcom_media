@@ -683,6 +683,11 @@ bool venc_dev::handle_dynamic_config(OMX_BUFFERHEADERTYPE *bufferHdr)
                 if (!venc_config_bitrate(&iter->config_data.bitrate))
                     return false;
                 break;
+            case OMX_IndexConfigCommonMirror:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_IndexConfigCommonMirror");
+                if (!venc_set_mirror(iter->config_data.mirror.eMirror))
+                    return false;
+                break;
             default:
                 DEBUG_PRINT_ERROR("Unsupported dynamic config type %d with timestamp %lld us", iter->type, iter->timestamp);
                 return false;
@@ -7051,6 +7056,9 @@ bool venc_dev::venc_store_dynamic_config(OMX_INDEXTYPE config_type, OMX_PTR conf
             break;
         case OMX_IndexConfigVideoVp8ReferenceFrame:
             memcpy(&newConfig.config_data.vp8refframe, config, sizeof(OMX_VIDEO_VP8REFERENCEFRAMETYPE));
+            break;
+        case OMX_IndexConfigCommonMirror:
+            memcpy(&newConfig.config_data.mirror, config, sizeof(OMX_CONFIG_MIRRORTYPE));
             break;
         default:
             DEBUG_PRINT_INFO("Unsupported dynamic config.");
