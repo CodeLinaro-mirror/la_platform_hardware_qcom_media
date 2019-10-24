@@ -3703,7 +3703,7 @@ OMX_ERRORTYPE  omx_vdec::use_output_buffer(
                        drv_ctx.video_resolution.frame_height,
                        drv_ctx.gbm_device_fd,
                        &drv_ctx.op_buf_gbm_info[i],
-                       secure_mode ? SECURE_FLAGS_OUTPUT_BUFFER : 0);
+                       secure_mode ? GBM_BO_USAGE_PROTECTED_QTI : 0);
                 if (status == false) {
                     DEBUG_PRINT_ERROR("ION device fd is bad %d",
                                       (int) drv_ctx.op_buf_ion_info[i].data_fd);
@@ -4587,7 +4587,7 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
                                drv_ctx.video_resolution.frame_height,
                                drv_ctx.gbm_device_fd,
                                &(*omx_op_buf_gbm_info)[i],
-                               (secure_mode) ? SECURE_FLAGS_OUTPUT_BUFFER : cache_flag);
+                               (secure_mode) ? GBM_BO_USAGE_PROTECTED_QTI : cache_flag);
             if (status == false) {
                 return OMX_ErrorInsufficientResources;
             }
@@ -6589,6 +6589,8 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
         DEBUG_PRINT_ERROR("Invalid arguments to alloc_map_ion_memory");
         return FALSE;
     }
+
+    flags |= (flag & GBM_BO_USAGE_PROTECTED_QTI);
 
     gbm = gbm_create_device(dev_fd);
     if (gbm == NULL) {
