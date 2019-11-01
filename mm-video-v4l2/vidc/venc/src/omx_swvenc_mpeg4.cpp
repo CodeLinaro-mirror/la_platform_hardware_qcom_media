@@ -42,10 +42,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "PlatformConfig.h"
 
+#ifndef SWENC_ROTATION_DISABLED
 /* use GraphicBuffer for rotation */
 #include <ui/GraphicBufferAllocator.h>
 #include <hardware/gralloc.h>
-
+#endif
 /* def: GET_VT_TIMESTAMP */
 #include <qdMetaData.h>
 
@@ -119,14 +120,18 @@ omx_venc::omx_venc()
     get_syntaxhdr_enable = false;
     m_bSeqHdrRequested = false;
     m_bDimensionsNeedFlip = false;
+#ifndef SWENC_ROTATION_DISABLED
     m_bIsRotationSupported = false;
+#endif
     m_bIsInFrameSizeSet = false;
     m_bIsOutFrameSizeSet = false;
     m_bIsInFlipDone = false;
     m_bIsOutFlipDone = false;
     m_bUseAVTimerTimestamps = false;
     m_bIsIntraperiodSet = false;
+#ifndef SWENC_ROTATION_DISABLED
     m_pIpbuffers = nullptr;
+#endif
     set_format = false;
     update_offset = true;
     m_ubwc_supported = false;
@@ -1684,6 +1689,7 @@ OMX_ERRORTYPE  omx_venc::set_config
             }
             break;
         }
+#ifndef SWENC_ROTATION_DISABLED
         case OMX_IndexConfigCommonRotate:
         {
             if (m_codec == SWVENC_CODEC_H263) {
@@ -1775,6 +1781,7 @@ OMX_ERRORTYPE  omx_venc::set_config
 
             }
         }
+#endif
         case OMX_IndexConfigAndroidVendorExtension:
         {
             OMX_CONFIG_ANDROID_VENDOR_EXTENSIONTYPE *ext =
@@ -1883,7 +1890,7 @@ OMX_ERRORTYPE omx_venc::swvenc_do_flip_outport() {
     EXIT_FUNC();
     return OMX_ErrorNone;
 }
-
+#ifndef SWENC_ROTATION_DISABLED
 bool omx_venc::swvenc_do_rotate(int fd, SWVENC_IPBUFFER & ipbuffer, OMX_U32 index) {
     // declarations and definitions of variables rotation needs
     private_handle_t *privateHandle = nullptr;
@@ -1977,7 +1984,7 @@ bool omx_venc::swvenc_do_rotate(int fd, SWVENC_IPBUFFER & ipbuffer, OMX_U32 inde
     swvenc_delete_pointer(privateHandle);
     return true;
 }
-
+#endif
 OMX_ERRORTYPE  omx_venc::component_deinit(OMX_IN OMX_HANDLETYPE hComp)
 {
     ENTER_FUNC();
@@ -1986,14 +1993,14 @@ OMX_ERRORTYPE  omx_venc::component_deinit(OMX_IN OMX_HANDLETYPE hComp)
     DEBUG_PRINT_HIGH("omx_venc(): Inside component_deinit()");
 
     (void)hComp;
-
+#ifndef SWENC_ROTATION_DISABLED
     if (m_bIsRotationSupported) {
         swvenc_rotation_deinit();
         if (m_pIpbuffers != nullptr) {
             delete [] m_pIpbuffers;
         }
     }
-
+#endif
     if (OMX_StateLoaded != m_state)
     {
         DEBUG_PRINT_ERROR("WARNING:Rxd DeInit,OMX not in LOADED state %d",
@@ -2100,6 +2107,7 @@ OMX_U32 omx_venc::dev_start(void)
    }
 
    m_stopped = false;
+#ifndef SWENC_ROTATION_DISABLED
    if (m_bIsRotationSupported){
        Ret = swvenc_rotation_init();
        if (Ret == SWVENC_S_UNSUPPORTED) {
@@ -2107,6 +2115,7 @@ OMX_U32 omx_venc::dev_start(void)
            m_bIsRotationSupported = false;
         }
    }
+#endif
    RETURN(0);
 }
 
@@ -2352,7 +2361,7 @@ bool omx_venc::dev_empty_buf
        // dump before rotation, un-rotated buffer
        swvenc_input_log_buffers((const char*)ipbuffer.p_buffer, ipbuffer.filled_length);
     }
-
+#ifndef SWENC_ROTATION_DISABLED
     if (m_bIsRotationSupported && m_sConfigFrameRotation.nRotation != 0) {
         if(!swvenc_do_rotate((int)fd, ipbuffer, (OMX_U32)index)) {
             DEBUG_PRINT_ERROR("rotate failed");
@@ -2364,7 +2373,7 @@ bool omx_venc::dev_empty_buf
             swvenc_input_log_rotated_buffers((const char*)ipbuffer.p_buffer, ipbuffer.filled_length);
         }
     }
-
+#endif
     Ret = swvenc_emptythisbuffer(m_hSwVenc, &ipbuffer);
     if (Ret != SWVENC_S_SUCCESS)
     {
@@ -3085,7 +3094,7 @@ SWVENC_STATUS omx_venc::swvenc_empty_buffer_done
         omxhdr = NULL;
         error = OMX_ErrorUndefined;
     }
-
+#ifndef SWENC_ROTATION_DISABLED
     if (m_pIpbuffers != nullptr) {
         int index = omxhdr - ((mUseProxyColorFormat && !mUsesColorConversion) ? meta_buffer_hdr : m_inp_mem_ptr);
         DEBUG_PRINT_HIGH("restore ipbuffer[p_buffer(%p), size(%d), filled_length(%d)] to original ipbuffer[p_buffer(%p), size(%d), filled_length(%d)]",
@@ -3099,7 +3108,7 @@ SWVENC_STATUS omx_venc::swvenc_empty_buffer_done
         p_ipbuffer->filled_length = m_pIpbuffers[index].filled_length;
         p_ipbuffer->p_buffer = m_pIpbuffers[index].p_buffer;
     }
-
+#endif
     if (omxhdr != NULL)
     {
         // unmap the input buffer->pBuffer
