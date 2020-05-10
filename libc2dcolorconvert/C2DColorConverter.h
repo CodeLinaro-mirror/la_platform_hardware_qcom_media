@@ -30,9 +30,21 @@
 #ifndef C2D_ColorConverter_H_
 #define C2D_ColorConverter_H_
 
+#ifndef NOTUSE_C2D2H
 #include <c2d2.h>
+#endif
 #include <sys/types.h>
 #include <stdint.h>
+
+#ifndef __c2d2_h_ //means c2d2.h is not included
+typedef int C2D_STATUS;
+typedef int C2D_SURFACE_TYPE;
+typedef void C2D_RECT;
+typedef void C2D_OBJECT;
+typedef void* c2d_ts_handle;
+typedef int int32;
+typedef unsigned int uint32;
+#endif
 
 typedef C2D_STATUS (*LINK_c2dCreateSurface)( uint32 *surface_id,
         uint32 surface_bits,

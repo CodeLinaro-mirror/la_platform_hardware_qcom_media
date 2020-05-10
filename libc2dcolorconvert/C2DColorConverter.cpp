@@ -98,7 +98,9 @@ private:
     void * mSrcSurfaceDef;
     void * mDstSurfaceDef;
 
+#ifdef __c2d2_h_
     C2D_OBJECT mBlit;
+#endif
     size_t mSrcWidth;
     size_t mSrcHeight;
     size_t mSrcStride;
@@ -119,6 +121,10 @@ C2DColorConverter::C2DColorConverter(size_t srcWidth, size_t srcHeight, size_t d
     : mC2DLibHandle(NULL),
       mAdrenoUtilsHandle(NULL)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+#else
      mError = 0;
      if (NV12_UBWC == dstFormat) {
          ALOGE("%s: FATAL ERROR: could not support UBWC output formats ", __FUNCTION__);
@@ -194,10 +200,16 @@ C2DColorConverter::C2DColorConverter(size_t srcWidth, size_t srcHeight, size_t d
     mBlit.target_rect.height = dstHeight << 16;
     mBlit.config_mask = C2D_ALPHA_BLEND_NONE | C2D_NO_BILINEAR_BIT | C2D_NO_ANTIALIASING_BIT | C2D_TARGET_RECT_BIT | mFlags;
     mBlit.surface_id = mSrcSurface;
+#endif
 }
 
 int C2DColorConverter::SourceCrop(int x, int y, size_t srcWidth, size_t srcHeight)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return mError;
+#else
     mBlit.source_rect.x = x << 16;
     mBlit.source_rect.y = y << 16;
     mBlit.source_rect.width = srcWidth << 16;
@@ -209,10 +221,15 @@ int C2DColorConverter::SourceCrop(int x, int y, size_t srcWidth, size_t srcHeigh
          mBlit.source_rect.width >> 16,
          mBlit.source_rect.height >> 16);
     return 0;
+#endif
 }
 
 C2DColorConverter::~C2DColorConverter()
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+#else
     if (!mError && mC2DLibHandle) {
 
         mC2DDestroySurface(mDstSurface);
@@ -238,10 +255,16 @@ C2DColorConverter::~C2DColorConverter()
     if (mAdrenoUtilsHandle) {
         dlclose(mAdrenoUtilsHandle);
     }
+#endif
 }
 
 int C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData, int dstFd, void *dstBase, void * dstData)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return mError;
+#else
     C2D_STATUS ret;
     uint8_t *srcMappedGpuAddr = nullptr;
     uint8_t *dstMappedGpuAddr = nullptr;
@@ -311,10 +334,16 @@ int C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData, int 
         }
         return ret;
     }
+#endif
 }
 
 bool C2DColorConverter::isYUVSurface(ColorConvertFormat format)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return false;
+#else
     switch (format) {
         case YCbCr420Tile:
         case YCbCr420SP:
@@ -330,10 +359,16 @@ bool C2DColorConverter::isYUVSurface(ColorConvertFormat format)
         default:
             return false;
     }
+#endif
 }
 
 void* C2DColorConverter::getDummySurfaceDef(ColorConvertFormat format, size_t width, size_t height, bool isSource)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return NULL;
+#else
     if (isYUVSurface(format)) {
         C2D_YUV_SURFACE_DEF * surfaceDef = new C2D_YUV_SURFACE_DEF;
         surfaceDef->format = getC2DFormat(format);
@@ -375,10 +410,16 @@ void* C2DColorConverter::getDummySurfaceDef(ColorConvertFormat format, size_t wi
                         &(*surfaceDef));
         return ((void *)surfaceDef);
     }
+#endif
 }
 
 C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(uint8_t *gpuAddr, void *base, void *data, bool isSource)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return mError;
+#else
     if (isSource) {
         C2D_YUV_SURFACE_DEF * srcSurfaceDef = (C2D_YUV_SURFACE_DEF *)mSrcSurfaceDef;
         srcSurfaceDef->plane0 = data;
@@ -409,10 +450,16 @@ C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(uint8_t *gpuAddr, void *base, 
                         (C2D_SURFACE_TYPE)(C2D_SURFACE_YUV_HOST | C2D_SURFACE_WITH_PHYS),
                         &(*dstSurfaceDef));
     }
+#endif
 }
 
 C2D_STATUS C2DColorConverter::updateRGBSurfaceDef(uint8_t *gpuAddr, void * data, bool isSource)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return mError;
+#else
     if (isSource) {
         C2D_RGB_SURFACE_DEF * srcSurfaceDef = (C2D_RGB_SURFACE_DEF *)mSrcSurfaceDef;
         srcSurfaceDef->buffer = data;
@@ -429,10 +476,16 @@ C2D_STATUS C2DColorConverter::updateRGBSurfaceDef(uint8_t *gpuAddr, void * data,
                         (C2D_SURFACE_TYPE)(C2D_SURFACE_RGB_HOST | C2D_SURFACE_WITH_PHYS),
                         &(*dstSurfaceDef));
     }
+#endif
 }
 
 uint32_t C2DColorConverter::getC2DFormat(ColorConvertFormat format)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return -1;
+#else
     switch (format) {
         case RGB565:
             return C2D_COLOR_FORMAT_565_RGB;
@@ -456,10 +509,16 @@ uint32_t C2DColorConverter::getC2DFormat(ColorConvertFormat format)
             ALOGE("Format not supported , %d\n", format);
             return -1;
     }
+#endif
 }
 
 size_t C2DColorConverter::calcStride(ColorConvertFormat format, size_t width)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return 0;
+#else
     switch (format) {
         case RGB565:
             return ALIGN(width, ALIGN32) * 2; // RGB565 has width as twice
@@ -487,10 +546,16 @@ size_t C2DColorConverter::calcStride(ColorConvertFormat format, size_t width)
         default:
             return 0;
     }
+#endif
 }
 
 size_t C2DColorConverter::calcYSize(ColorConvertFormat format, size_t width, size_t height)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return 0;
+#else
     switch (format) {
         case YCbCr420SP:
             return (ALIGN(width, ALIGN16) * height);
@@ -515,10 +580,16 @@ size_t C2DColorConverter::calcYSize(ColorConvertFormat format, size_t width, siz
         default:
             return 0;
     }
+#endif
 }
 
 size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size_t height)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return 0;
+#else
     int32_t alignedw = 0;
     int32_t alignedh = 0;
     int32_t size = 0;
@@ -585,12 +656,18 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
             break;
     }
     return size;
+#endif
 }
 /*
  * Tells GPU to map given buffer and returns a physical address of mapped buffer
  */
 void * C2DColorConverter::getMappedGPUAddr(int bufFD, void *bufPtr, size_t bufLen)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return NULL;
+#else
     C2D_STATUS status;
     void *gpuaddr = NULL;
 
@@ -605,10 +682,16 @@ void * C2DColorConverter::getMappedGPUAddr(int bufFD, void *bufPtr, size_t bufLe
             gpuaddr, bufFD, bufPtr, bufLen);
 
     return gpuaddr;
+#endif
 }
 
 bool C2DColorConverter::unmapGPUAddr(unsigned long gAddr)
 {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return false;
+#else
 
     C2D_STATUS status = mC2DUnMapAddr((void*)gAddr);
 
@@ -616,9 +699,15 @@ bool C2DColorConverter::unmapGPUAddr(unsigned long gAddr)
         ALOGE("c2dUnMapAddr failed: status %d gpuaddr %08lx\n", status, gAddr);
 
     return (status == C2D_STATUS_OK);
+#endif
 }
 
 int32_t C2DColorConverter::getBuffReq(int32_t port, C2DBuffReq *req) {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return mError;
+#else
     if (!req) return -1;
 
     if (port != C2D_INPUT && port != C2D_OUTPUT) return -1;
@@ -646,9 +735,15 @@ int32_t C2DColorConverter::getBuffReq(int32_t port, C2DBuffReq *req) {
         ALOGV("output req->size = %d\n", req->size);
     }
     return 0;
+#endif
 }
 
 size_t C2DColorConverter::calcLumaAlign(ColorConvertFormat format) {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return 0;
+#else
     if (!isYUVSurface(format)) return 1; //no requirement
 
     switch (format) {
@@ -662,9 +757,15 @@ size_t C2DColorConverter::calcLumaAlign(ColorConvertFormat format) {
           ALOGE("unknown format passed for luma alignment number");
           return 1;
     }
+#endif
 }
 
 size_t C2DColorConverter::calcSizeAlign(ColorConvertFormat format) {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return 0;
+#else
     if (!isYUVSurface(format)) return 1; //no requirement
 
     switch (format) {
@@ -678,6 +779,7 @@ size_t C2DColorConverter::calcSizeAlign(ColorConvertFormat format) {
           ALOGE("unknown format passed for size alignment number");
           return 1;
     }
+#endif
 }
 
 C2DBytesPerPixel C2DColorConverter::calcBytesPerPixel(ColorConvertFormat format) {
@@ -685,6 +787,10 @@ C2DBytesPerPixel C2DColorConverter::calcBytesPerPixel(ColorConvertFormat format)
     bpp.numerator = 0;
     bpp.denominator = 1;
 
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+#else
     switch (format) {
         case RGB565:
             bpp.numerator = 2;
@@ -705,10 +811,16 @@ C2DBytesPerPixel C2DColorConverter::calcBytesPerPixel(ColorConvertFormat format)
         default:
             break;
     }
+#endif
     return bpp;
 }
 
 int32_t C2DColorConverter::dumpOutput(char * filename, char mode) {
+#ifndef __c2d2_h_
+    ALOGE("%s: It is dummy C2DColorConverter, no function!", __FUNCTION__);
+    mError = -100;
+    return mError;
+#else
     int fd;
     size_t stride, sliceHeight;
     if (!filename) return -1;
@@ -802,16 +914,26 @@ int32_t C2DColorConverter::dumpOutput(char * filename, char mode) {
     }
     close(fd);
     return ret < 0 ? ret : 0;
+#endif
 }
 
 extern "C" C2DColorConverterBase* createC2DColorConverter(size_t srcWidth, size_t srcHeight, size_t dstWidth, size_t dstHeight, ColorConvertFormat srcFormat, ColorConvertFormat dstFormat, int32_t flags, size_t srcStride)
 {
+#ifndef __c2d2_h_
+    printf("%s: It is dummy C2DColorConverter, no function!\n", __FUNCTION__);
+    return NULL;
+#else
     return new C2DColorConverter(srcWidth, srcHeight, dstWidth, dstHeight, srcFormat, dstFormat, flags, srcStride);
+#endif
 }
 
 extern "C" void destroyC2DColorConverter(C2DColorConverterBase* C2DCC)
 {
+#ifndef __c2d2_h_
+    printf("%s: It is dummy C2DColorConverter, no function!\n", __FUNCTION__);
+#else
     delete C2DCC;
+#endif
 }
 
 }
