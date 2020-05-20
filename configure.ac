@@ -213,6 +213,7 @@ if (test "x${with_glib}" = "xyes"); then
 fi
 
 AC_CHECK_HEADER(c2d2.h, [], [CPPFLAGS="$CPPFLAGS -DNOTUSE_C2D2H"])
+AC_CHECK_HEADER(gbm_priv.h, [], [CPPFLAGS="$CPPFLAGS -DDISABLE_USE_GBM"])
 
 AC_SUBST([CPPFLAGS])
 AC_SUBST([CFLAGS])

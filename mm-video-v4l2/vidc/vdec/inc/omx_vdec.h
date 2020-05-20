@@ -73,6 +73,9 @@ static ptrdiff_t x;
 extern "C" {
 #include <utils/Log.h>
 }
+#ifdef DISABLE_USE_GBM
+#undef USE_GBM	//disable USE_GBM
+#endif
 #ifdef USE_GBM
 #include "gbm.h"
 #include "gbm_priv.h"
