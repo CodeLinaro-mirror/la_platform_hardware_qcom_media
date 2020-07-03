@@ -65,8 +65,10 @@ AM_CPPFLAGS += -I$(WORKSPACE)/display/display-hal/libqdutils/
 AM_CPPFLAGS += -I$(WORKSPACE)/hardware/libhardware/include/
 AM_CPPFLAGS += -I${WORKSPACE}/frameworks/native/include/
 c_sources = src/ts_parser.cpp
+c_sources += src/omx_vdec_v4l2_params.cpp
 c_sources += src/omx_vdec_v4l2.cpp
 c_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_common.cpp
+c_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_debug.cpp
 c_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_vendor_extensions.cpp
 
 lib_LTLIBRARIES = libOmxVdec.la

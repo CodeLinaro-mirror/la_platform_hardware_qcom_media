@@ -34,6 +34,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "OMX_QCOMExtns.h"
 #include <linux/dma-buf.h>
+#include <sys/ioctl.h>
 #ifdef _ANDROID_
 #include <gralloc_priv.h>
 #endif

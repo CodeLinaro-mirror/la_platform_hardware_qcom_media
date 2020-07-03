@@ -43,6 +43,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define BUFFER_LOG_LOC "/data/vendor/media"
 
+#ifdef _USE_GLIB_
+#include <glib.h>
+#define strlcpy g_strlcpy
+#endif
+
 #ifdef _ANDROID_
 extern "C" {
 #include<utils/Log.h>

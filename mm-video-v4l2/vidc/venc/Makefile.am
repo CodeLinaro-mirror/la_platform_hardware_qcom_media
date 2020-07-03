@@ -70,14 +70,16 @@ AM_CPPFLAGS += -I${WORKSPACE}/frameworks/native/include/
 sources = src/omx_video_base.cpp
 sources += src/omx_video_encoder.cpp
 sources += src/video_encoder_device_v4l2.cpp
+sources += src/video_encoder_device_v4l2_params.cpp
 sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_common.cpp
 sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_vendor_extensions.cpp
+sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_debug.cpp
 
 lib_LTLIBRARIES = libOmxVenc.la
 libOmxVenc_la_SOURCES = $(sources)
 libOmxVenc_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxVenc_la_LDFLAGS = -module -shared -avoid-version
-libOmxVenc_la_LDFLAGS += -lstdc++ -lpthread -llog -lutils -lcutils -lglib-2.0 -lbase -ldl -lpthread -lion
+libOmxVenc_la_LDFLAGS += -lstdc++ -lpthread -llog -lutils -lcutils -lglib-2.0 -ldl -lpthread -lion
 
 libOmxVenc_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig
-libOmxVenc_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig -larbitrarybytes
+libOmxVenc_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
