@@ -63,6 +63,7 @@ libmm-venc-inc      += hardware/qcom/media/libstagefrighthw
 libmm-venc-inc      += hardware/qcom/media/libplatformconfig
 libmm-venc-inc      += $(TARGET_OUT_HEADERS)/adreno
 libmm-venc-inc      += hardware/qcom/media/libc2dcolorconvert
+libmm-venc-inc      += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
 libmm-venc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativewindow/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativebase/include

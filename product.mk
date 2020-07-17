@@ -1,4 +1,4 @@
-MSM_VIDC_TARGET_LIST := kona lito bengal
+MSM_VIDC_TARGET_LIST := kona lito bengal msmnile
 
 ifeq ($(call is-board-platform-in-list, $(QCOM_BOARD_PLATFORMS)),true)
 

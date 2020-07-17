@@ -21,6 +21,7 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/adreno
 LOCAL_C_INCLUDES += $(TOP)/vendor/qcom/opensource/commonsys-intf/display/gralloc
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+LOCAL_C_INCLUDES += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
 
 LOCAL_HEADER_LIBRARIES := \
         libutils_headers \

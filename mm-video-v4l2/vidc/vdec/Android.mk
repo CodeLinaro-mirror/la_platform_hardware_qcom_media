@@ -65,12 +65,13 @@ libmm-vdec-inc          := $(LOCAL_PATH)/inc
 libmm-vdec-inc          += $(LIBION_HEADER_PATHS)
 libmm-vdec-inc          += $(TOP)/hardware/qcom/media/mm-video-v4l2/vidc/common/inc
 libmm-vdec-inc          += $(TOP)/hardware/qcom/media/mm-core/inc
-libmm-vdec-inc          += hardware/qcom/media/libplatformconfig
+libmm-vdec-inc          += $(TOP)/hardware/qcom/media/libplatformconfig
 libmm-vdec-inc          += $(TARGET_OUT_HEADERS)/adreno
 libmm-vdec-inc      	+= $(TOP)/hardware/qcom/media/libc2dcolorconvert
 libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/SwVdec
 libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/swvdec
 libmm-vdec-inc      	+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+libmm-vdec-inc          += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
 
 
 ifeq ($(PLATFORM_SDK_VERSION), 18)  #JB_MR2
