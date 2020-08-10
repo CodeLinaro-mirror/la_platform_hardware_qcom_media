@@ -49,7 +49,7 @@
 #include <ion/ion.h>
 #include <linux/dma-buf.h>
 #endif
-#include <media/msm_media_info.h>
+#include <vidc/media/msm_media_info.h>
 
 #ifdef USE_GBM
 #include "gbm.h"

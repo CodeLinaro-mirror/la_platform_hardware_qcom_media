@@ -39,7 +39,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "swvenc_api.h"
 #include "swvenc_types.h"
 
-#include <media/msm_media_info.h>
+#include <vidc/media/msm_media_info.h>
 #ifndef SWENC_ROTATION_DISABLED
 #include <ui/GraphicBuffer.h>
 #endif
