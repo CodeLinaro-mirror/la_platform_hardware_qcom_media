@@ -83,6 +83,11 @@ omx_core_cb_type core[] =
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.encoder.mpegh", "libOmxMpeghEncSw.so", "audio_encoder.mpegh"),
 #endif //AUDIO_MPEGH_ENABLED
 
+#ifndef _TRINKET_
+    OMX_REGISTRY_ENTRY("OMX.qti.video.decoder.vc1sw", "libOmxSwVdec.so", "video_decoder.vc1"),
+    OMX_REGISTRY_ENTRY("OMX.qti.video.decoder.wmvsw", "libOmxSwVdec.so", "video_decoder.vc1"),
+#endif //_TRINKET_
+
 #ifndef _BENGAL_
     OMX_REGISTRY_ENTRY("OMX.qcom.video.decoder.mpeg2", "libOmxVdec.so", "video_decoder.mpeg2"),
     OMX_REGISTRY_ENTRY("OMX.qcom.video.decoder.mpeg2.secure", "libOmxVdec.so", "video_decoder.mpeg2"),
