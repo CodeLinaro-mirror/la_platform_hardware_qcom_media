@@ -35,7 +35,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <media/hardware/HardwareAPI.h>
 
 /* def: VENUS_BUFFER_SIZE, VENUS_Y_STRIDE etc */
-#include <media/msm_media_info.h>
+#include <vidc/media/msm_media_info.h>
 
 /* def: private_handle_t*/
 #include <gralloc_priv.h>

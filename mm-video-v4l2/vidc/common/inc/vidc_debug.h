@@ -45,7 +45,7 @@ extern "C" {
 #include <color_metadata.h>
 #define STRINGIFY_ENUMS
 #include "media/hardware/VideoAPI.h"
-#include "media/msm_vidc_utils.h"
+#include "vidc/media/msm_vidc_utils.h"
 
 using android::ColorAspects;
 using android::HDRStaticInfo;
