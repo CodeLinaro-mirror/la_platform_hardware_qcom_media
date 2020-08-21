@@ -1315,6 +1315,19 @@ OMX_ERRORTYPE  omx_venc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                         eRet = OMX_ErrorUnsupportedIndex;
                         break;
                     }
+                } else if (pParam->nIndex == (OMX_INDEXTYPE)OMX_ExtraDataFrameDimension) {
+                    if (pParam->nPortIndex == PORT_INDEX_IN) {
+                        if (pParam->bEnabled == OMX_TRUE)
+                            mask = EXTRADATA_ENC_INPUT_CROP;
+
+                        DEBUG_PRINT_HIGH("Data frame dimension extradata %s",
+                                ((pParam->bEnabled == OMX_TRUE) ? "enabled" : "disabled"));
+                    } else {
+                        DEBUG_PRINT_ERROR("set_parameter: data frame dimension information is "
+                                "valid for input port only");
+                        eRet = OMX_ErrorUnsupportedIndex;
+                        break;
+                    }
                 } else {
                     DEBUG_PRINT_ERROR("set_parameter: unsupported extrdata index (%x)",
                             pParam->nIndex);

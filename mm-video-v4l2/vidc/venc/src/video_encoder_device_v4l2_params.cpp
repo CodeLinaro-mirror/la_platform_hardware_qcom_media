@@ -1203,6 +1203,9 @@ bool venc_dev::venc_set_extradata(OMX_U32 extra_data, OMX_BOOL enable)
         case OMX_QTI_ExtraDataCategory_Enc_ROI:
             control.value = EXTRADATA_ENC_INPUT_ROI;
             break;
+        case OMX_ExtraDataFrameDimension:
+            control.value = EXTRADATA_ENC_INPUT_CROP;
+            break;
         default:
             DEBUG_PRINT_ERROR("Unrecognized extradata index 0x%x", (unsigned int)extra_data);
             return false;

@@ -651,6 +651,28 @@ bailout:
     return ret;
 }
 
+inline int get_yuv_size(unsigned long fmt, int width, int height) {
+    unsigned int y_stride, uv_stride, y_sclines,
+                 uv_sclines, y_plane, uv_plane;
+    unsigned size = 0;
+
+    y_stride = VENUS_Y_STRIDE(fmt, width);
+    uv_stride = VENUS_UV_STRIDE(fmt, width);
+    y_sclines = VENUS_Y_SCANLINES(fmt, height);
+    uv_sclines = VENUS_UV_SCANLINES(fmt, height);
+
+    switch (fmt) {
+        case COLOR_FMT_NV12:
+            y_plane = y_stride * y_sclines;
+            uv_plane = uv_stride * uv_sclines;
+            size = MSM_MEDIA_ALIGN(y_plane + uv_plane, 4096);
+            break;
+        default:
+            break;
+    }
+    return size;
+}
+
 bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
 {
     unsigned int filled_len = 0;
@@ -660,6 +682,11 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
     OMX_TICKS nTimeStamp = static_cast<OMX_TICKS>(buf.timestamp.tv_sec) * 1000000 + buf.timestamp.tv_usec;
     int fd = buf.m.planes[0].reserved[MSM_VIDC_BUFFER_FD];
     char *p_extradata = NULL;
+    unsigned char *pVirt = NULL;
+    unsigned int consumed_len = 0;
+    unsigned int yuv_size = 0;
+    unsigned int size = 0;
+    OMX_OTHER_EXTRADATATYPE *p_extra = NULL;
     OMX_OTHER_EXTRADATATYPE *data = NULL;
     struct roidata roi;
     bool status = true;
@@ -679,9 +706,60 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
     DEBUG_PRINT_HIGH("Processing Extradata for Buffer = %lld", nTimeStamp); // Useful for debugging
     sync_start_rw(input_extradata_info.ion[index].data_fd);
 
+    if (m_sVenc_cfg.inputformat == V4L2_PIX_FMT_NV12 || m_sVenc_cfg.inputformat == V4L2_PIX_FMT_NV21) {
+        size = VENUS_BUFFER_SIZE(COLOR_FMT_NV12, width, height);
+        yuv_size = get_yuv_size(COLOR_FMT_NV12, width, height);
+        pVirt = (unsigned char *)mmap(NULL, size, PROT_READ|PROT_WRITE,MAP_SHARED, fd, 0);
+        if (pVirt == MAP_FAILED) {
+            DEBUG_PRINT_ERROR("%s Failed to mmap",__func__);
+            status = false;
+            goto bailout;
+        }
+        p_extra = (OMX_OTHER_EXTRADATATYPE *) ((unsigned long)(pVirt + yuv_size + 3)&(~3));
+    }
+
     p_extradata = input_extradata_info.ion[index].uaddr;
     data = (struct OMX_OTHER_EXTRADATATYPE *)p_extradata;
     memset((void *)(data), 0, (input_extradata_info.buffer_size)); // clear stale data in current buffer
+
+    while (p_extra && (consumed_len + sizeof(OMX_OTHER_EXTRADATATYPE)) <= (size - yuv_size)
+        && (consumed_len + p_extra->nSize) <= (size - yuv_size)
+        && (filled_len + sizeof(OMX_OTHER_EXTRADATATYPE) <= input_extradata_info.buffer_size)
+        && (filled_len + p_extra->nSize <= input_extradata_info.buffer_size)
+        && (p_extra->eType != (OMX_EXTRADATATYPE)MSM_VIDC_EXTRADATA_NONE)) {
+        DEBUG_PRINT_LOW("Extradata Type = 0x%x", (OMX_QCOM_EXTRADATATYPE)p_extra->eType);
+        switch ((OMX_QCOM_EXTRADATATYPE)p_extra->eType) {
+            case OMX_ExtraDataFrameDimension:
+            {
+                struct msm_vidc_extradata_index *payload;
+                OMX_QCOM_EXTRADATA_FRAMEDIMENSION *framedimension_format;
+                data->nSize = (sizeof(OMX_OTHER_EXTRADATATYPE) + sizeof(struct msm_vidc_extradata_index) + 3)&(~3);
+                data->nVersion.nVersion = OMX_SPEC_VERSION;
+                data->nPortIndex = 0;
+                data->eType = (OMX_EXTRADATATYPE)MSM_VIDC_EXTRADATA_INDEX;
+                data->nDataSize = sizeof(struct msm_vidc_input_crop_payload);
+                framedimension_format = (OMX_QCOM_EXTRADATA_FRAMEDIMENSION *)p_extra->data;
+                payload = (struct msm_vidc_extradata_index *)(data->data);
+                payload->type = MSM_VIDC_EXTRADATA_INPUT_CROP;
+                payload->input_crop.left = framedimension_format->nDecWidth;
+                payload->input_crop.top = framedimension_format->nDecHeight;
+                payload->input_crop.width = framedimension_format->nActualWidth;
+                payload->input_crop.height = framedimension_format->nActualHeight;
+                DEBUG_PRINT_LOW("Height = %d Width = %d Actual Height = %d Actual Width = %d",
+                        framedimension_format->nDecWidth, framedimension_format->nDecHeight,
+                        framedimension_format->nActualWidth, framedimension_format->nActualHeight);
+                filled_len += data->nSize;
+                data = (OMX_OTHER_EXTRADATATYPE *)((char *)data + data->nSize);
+                break;
+            }
+            default:
+                DEBUG_PRINT_HIGH("Unknown Extradata 0x%x", (OMX_QCOM_EXTRADATATYPE)p_extra->eType);
+                break;
+        }
+
+        consumed_len += p_extra->nSize;
+        p_extra = (OMX_OTHER_EXTRADATATYPE *)((char *)p_extra + p_extra->nSize);
+    }
 
     if (m_cvp_meta_enabled && !(buf.flags & V4L2_BUF_FLAG_CVPMETADATA_SKIP)) {
         packet_size = sizeof(struct msm_vidc_extradata_header) - sizeof(unsigned int)
@@ -838,6 +916,9 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
     data->eType = OMX_ExtraDataNone;
     data->nDataSize = 0;
     data->data[0] = 0;
+
+    if (pVirt)
+      munmap(pVirt, size);
 
 bailout:
     sync_end_rw(input_extradata_info.ion[index].data_fd);

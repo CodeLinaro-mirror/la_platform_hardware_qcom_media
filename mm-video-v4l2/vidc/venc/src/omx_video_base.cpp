@@ -1862,6 +1862,14 @@ OMX_ERRORTYPE  omx_video::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                         DEBUG_PRINT_ERROR("get_parameter: ROI is valid for input port only");
                         eRet = OMX_ErrorUnsupportedIndex;
                     }
+                } else if (pParam->nIndex == (OMX_INDEXTYPE)OMX_ExtraDataFrameDimension) {
+                    if (pParam->nPortIndex == PORT_INDEX_IN) {
+                        pParam->bEnabled = (OMX_BOOL)(m_sExtraData & EXTRADATA_ENC_INPUT_CROP);
+                        DEBUG_PRINT_HIGH("INPUT CROP %d", pParam->bEnabled);
+                    } else {
+                        DEBUG_PRINT_ERROR("get_parameter:INPUT CROP is valid for input port only");
+                        eRet = OMX_ErrorUnsupportedIndex;
+                    }
                 } else {
                     DEBUG_PRINT_ERROR("get_parameter: unsupported extradata index (0x%x)",
                             pParam->nPortIndex);
