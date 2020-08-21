@@ -4919,8 +4919,7 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
             DEBUG_PRINT_HIGH("Enabling cacheing for this buffer");
             ion_info->alloc_data.flags = ION_FLAG_CACHED;
         }
-        ion_info->alloc_data.heap_id_mask = (ION_HEAP(MEM_HEAP_ID) |
-                                    ION_HEAP(ION_SYSTEM_HEAP_ID));
+        ion_info->alloc_data.heap_id_mask = ION_HEAP(ION_SYSTEM_HEAP_ID);
         DEBUG_PRINT_HIGH("ION ALLOC unsec buf: size %u flags %x",
                 (unsigned int)ion_info->alloc_data.len,
                 ion_info->alloc_data.flags);
