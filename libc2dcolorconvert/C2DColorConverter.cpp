@@ -746,6 +746,7 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
             alignedw = ALIGN(width*2, ALIGN256);
             alignedh = ALIGN(height/2, ALIGN16);
             size = ALIGN(size + (alignedw * alignedh), ALIGN4K);
+            break;
         case CbYCrY:
             size = ALIGN(ALIGN(width * 2, ALIGN64) * height, ALIGN4K);
             break;

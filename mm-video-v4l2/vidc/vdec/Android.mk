@@ -146,6 +146,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 ifneq "$(wildcard $(QCPATH) )" ""
 ifneq ($(call is-board-platform-in-list, $(TARGETS_THAT_DONT_NEED_SW_VDEC)),true)
+ifneq ($(TARGET_KERNEL_VERSION), 5.4)
 
 LOCAL_MODULE                  := libOmxSwVdec
 LOCAL_MODULE_TAGS             := optional
@@ -179,6 +180,7 @@ LOCAL_SRC_FILES               := src/omx_swvdec.cpp
 LOCAL_SRC_FILES               += src/omx_swvdec_utils.cpp
 
 include $(BUILD_SHARED_LIBRARY)
+endif
 endif
 endif
 
