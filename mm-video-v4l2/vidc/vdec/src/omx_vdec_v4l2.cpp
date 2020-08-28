@@ -79,7 +79,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define strlcpy g_strlcpy
 #endif
 
+#ifndef _LINUX_
 #include <qdMetaData.h>
+#endif
 #include <gralloc_priv.h>
 
 #ifdef ANDROID_JELLYBEAN_MR2
@@ -764,8 +766,9 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
     m_color_space = EXCEPT_BT2020;
 
     init_color_aspects_map();
+#ifndef _LINUX_
     m_hist_metadata.stat_len = 0;
-
+#endif
     profile_level_converter::init();
     clientSet_profile_level.eProfile = 0;
     clientSet_profile_level.eLevel = 0;
@@ -2871,13 +2874,13 @@ bool omx_vdec::post_event(unsigned long p1,
 
     if (id == m_fill_output_msg ||
             id == OMX_COMPONENT_GENERATE_FBD ||
-#ifndef __LINUX__
+#ifndef _LINUX_
             id == OMX_COMPONENT_GENERATE_EVENT_OUTPUT_FLUSH ||
 #endif
             id == OMX_COMPONENT_GENERATE_PORT_RECONFIG) {
         m_ftb_q.insert_entry(p1,p2,id);
     } else if (id == OMX_COMPONENT_GENERATE_ETB ||
-#ifndef __LINUX__
+#ifndef _LINUX_
             id == OMX_COMPONENT_GENERATE_EVENT_INPUT_FLUSH ||
 #endif
             id == OMX_COMPONENT_GENERATE_EBD) {
@@ -5401,7 +5404,7 @@ OMX_ERRORTYPE  omx_vdec::fill_this_buffer(OMX_IN OMX_HANDLETYPE  hComp,
 
     if (client_buffers.is_color_conversion_enabled()) {
         buffer = m_intermediate_out_mem_ptr + nPortIndex;
-#ifndef __LINUX__
+#ifndef _LINUX_
         buffer->nAllocLen = drv_ctx.op_buf.buffer_size;
 #endif
     }
@@ -6270,8 +6273,10 @@ OMX_ERRORTYPE omx_vdec::fill_buffer_done(OMX_HANDLETYPE hComp,
 
             DEBUG_PRINT_LOW("frc set refresh_rate %f, frame %d", refresh_rate, proc_frms);
             OMX_U32 buf_index = buffer - omx_base_address;
+#ifndef _LINUX_
             setMetaData((private_handle_t *)native_buffer[buf_index].privatehandle,
                          UPDATE_REFRESH_RATE, (void*)&refresh_rate);
+#endif
         }
 
         if (il_buffer) {
@@ -8038,6 +8043,7 @@ void omx_vdec::get_preferred_hdr_info(HDRStaticInfo& finalHDRInfo)
         preferredHDRInfo.sType1.mMaxFrameAverageLightLevel : defaultHDRInfo.sType1.mMaxFrameAverageLightLevel;
 }
 
+#ifndef _LINUX_
 void omx_vdec::set_histogram_metadata(private_handle_t *private_handle)
 {
     if (m_hist_metadata.stat_len != VIDEO_HISTOGRAM_STATS_SIZE || !private_handle)
@@ -8053,6 +8059,7 @@ void omx_vdec::set_histogram_metadata(private_handle_t *private_handle)
 
     m_hist_metadata.stat_len = 0;
 }
+#endif
 
 bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
 {
@@ -8145,7 +8152,9 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
                         DEBUG_PRINT_LOW("setMetaData INTERLACED format:%d enable:%d",
                                         payload->format, enable);
 
+#ifndef _LINUX_
                         setMetaData(private_handle, PP_PARAM_INTERLACED, (void*)&enable);
+#endif
                     }
                     break;
                 case MSM_VIDC_EXTRADATA_TIMESTAMP:
@@ -8233,6 +8242,7 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
                     internal_hdr_info_changed_flag |= handle_mastering_display_color_info((void*)data->data);
                     break;
                 case MSM_VIDC_EXTRADATA_HDR_HIST:
+#ifndef _LINUX_
                     if (data->nDataSize != VIDEO_HISTOGRAM_STATS_SIZE) {
                         DEBUG_PRINT_ERROR("Invalid HDR histogram extradata size %u", data->nDataSize);
                         m_hist_metadata.stat_len = 0;
@@ -8241,6 +8251,7 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
                         m_hist_metadata.stat_len = VIDEO_HISTOGRAM_STATS_SIZE;
                         m_hist_metadata.frame_type = (p_buf_hdr->nFlags & OMX_BUFFERFLAG_SYNCFRAME) ? QD_SYNC_FRAME : 0;
                     }
+#endif
                     break;
                 case MSM_VIDC_EXTRADATA_NUM_CONCEALED_MB:
                 case MSM_VIDC_EXTRADATA_FRAME_RATE:
@@ -8295,7 +8306,9 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
                 print_debug_hdr10plus_metadata(color_mdata);
                 setMetaData(private_handle, COLOR_METADATA, (void*)&color_mdata);
 #endif
+#ifndef _LINUX_
                 set_histogram_metadata(private_handle);
+#endif
         } else {
 #ifdef USE_GBM
             ColorAspects final_color_aspects;

@@ -22,7 +22,7 @@ AM_CPPFLAGS += -Wno-parentheses
 AM_CPPFLAGS += -D_ANDROID_ICS_
 AM_CPPFLAGS += -DPROCESS_EXTRADATA_IN_OUTPUT_PORT
 AM_CPPFLAGS += -DNATIVE_BASE_DISABLE
-AM_CPPFLAGS += -D__LINUX__
+AM_CPPFLAGS += -D_LINUX_
 
 if TARGET_HYPERVISOR
 AM_CPPFLAGS += -DHYPERVISOR
@@ -84,7 +84,7 @@ lib_LTLIBRARIES = libOmxVdec.la
 libOmxVdec_la_SOURCES = $(c_sources)
 libOmxVdec_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxVdec_la_LDFLAGS = -module -shared -avoid-version
-libOmxVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lqdMetaData
+libOmxVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion
 libOmxVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig
 libOmxVdec_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
 
@@ -98,7 +98,7 @@ c1_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_vendor_extensions
 libOmxSwVdec_la_SOURCES = $(c1_sources)
 libOmxSwVdec_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxSwVdec_la_LDFLAGS = -module -shared -avoid-version
-libOmxSwVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lqdMetaData -lswvdec
+libOmxSwVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lswvdec
 libOmxSwVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert
 libOmxSwVdec_la_LDFLAGS += -lc2dcolorconvert
 endif

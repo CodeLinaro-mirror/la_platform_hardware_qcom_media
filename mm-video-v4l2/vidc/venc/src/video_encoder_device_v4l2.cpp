@@ -59,7 +59,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define strlcpy g_strlcpy
 #endif
 
+#ifndef _LINUX_
 #include <qdMetaData.h>
+#endif
 #include <color_metadata.h>
 #include "PlatformConfig.h"
 
@@ -770,6 +772,7 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
         p_extra = (OMX_OTHER_EXTRADATATYPE *)((char *)p_extra + p_extra->nSize);
     }
 
+#ifndef _LINUX_
     if (m_cvp_meta_enabled && !(buf.flags & V4L2_BUF_FLAG_CVPMETADATA_SKIP)) {
         packet_size = sizeof(struct msm_vidc_extradata_header) - sizeof(unsigned int)
                            + cvpMetadata.size;
@@ -793,6 +796,7 @@ bool venc_dev::handle_input_extradata(struct v4l2_buffer buf)
         }
     }
     cvpMetadata.size = 0;
+#endif
 
       /*
        * Below code is based on these points.
@@ -2703,14 +2707,17 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
 
                     if (mUseAVTimerTimestamps) {
                         uint64_t avTimerTimestampNs = bufhdr->nTimeStamp * 1000;
+#ifndef _LINUX_
                         if (getMetaData(handle, GET_VT_TIMESTAMP, &avTimerTimestampNs) == 0
                                 && avTimerTimestampNs > 0) {
                             bufhdr->nTimeStamp = avTimerTimestampNs / 1000;
                             DEBUG_PRINT_LOW("AVTimer TS : %llu us", (unsigned long long)bufhdr->nTimeStamp);
                         }
+#endif
                     }
 
                     if (!streaming[OUTPUT_PORT]) {
+#ifndef _LINUX_
                         // Moment of truth... actual colorspace is known here..
                         if (getMetaData(handle, GET_COLOR_METADATA, &colorData) == 0) {
                             DEBUG_PRINT_INFO("ENC_CONFIG: gralloc Color MetaData colorPrimaries=%d colorRange=%d "
@@ -2725,6 +2732,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                             DEBUG_PRINT_ERROR("ERROR: Setting CVP enable");
                             return false;
                         }
+#endif
 
                         struct v4l2_format fmt;
                         memset(&fmt, 0, sizeof(fmt));
@@ -2850,14 +2858,17 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                             return false;
                         }
                     } else {
+#ifndef _LINUX_
                         if (m_hdr10meta_enabled) {
                             if (getMetaData(handle, GET_COLOR_METADATA, &colorData) == 0) {
                                 DEBUG_PRINT_INFO("ENC_CONFIG: gralloc Color MetaData dynamicMetaDataValid=%u dynamicMetaDataLen=%u",
                                                  colorData.dynamicMetaDataValid, colorData.dynamicMetaDataLen);
                             }
                         }
+#endif
                     } // Check OUTPUT Streaming
 
+#ifndef _LINUX_
                     if (!venc_get_cvp_metadata(handle, &buf))
                         return false;
 
@@ -2928,6 +2939,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                     DEBUG_PRINT_LOW("venc_empty_buf: Opaque camera buf: fd = %d "
                                 ": filled %d of %d format 0x%lx (%s) CR %d", fd, plane[0].bytesused,
                                 plane[0].length, m_sVenc_cfg.inputformat, v4l2ColorFormatStr, plane[0].reserved[MSM_VIDC_COMP_RATIO]);
+#endif
                 }
             } else {
                 // Metadata mode
@@ -4455,6 +4467,7 @@ bool venc_dev::venc_superframe_enable(private_handle_t *handle)
     return true;
 }
 
+#ifndef _LINUX_
 bool venc_dev::venc_cvp_enable(private_handle_t *handle)
 {
     cvpMetadata.size = 0;
@@ -4552,6 +4565,7 @@ bool venc_dev::venc_get_cvp_metadata(private_handle_t *handle, struct v4l2_buffe
     }
     return true;
 }
+#endif
 
 bool venc_dev::venc_config_bitrate(OMX_VIDEO_CONFIG_BITRATETYPE *bit_rate)
 {
