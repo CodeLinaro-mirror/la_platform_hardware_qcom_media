@@ -31,7 +31,6 @@ AM_CPPFLAGS += -DUSE_ION
 AM_CPPFLAGS += -Wno-enum-compare
 #AM_CPPFLAGS += "-include stdint.h"
 AM_CPPFLAGS += "-Dstrlcpy=g_strlcpy"
-AM_CPPFLAGS += -D_LINUX_
 
 AM_CPPFLAGS += "-Dstrlcat=g_strlcat"
 AM_CPPFLAGS += "-std=c++11"
@@ -108,7 +107,7 @@ c1_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_vendor_extensions
 libOmxSwVencMpeg4_la_SOURCES = $(c1_sources)
 libOmxSwVencMpeg4_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxSwVencMpeg4_la_LDFLAGS = -module -shared -avoid-version
-libOmxSwVencMpeg4_la_LDFLAGS += -llog  -lcutils  -lglib-2.0 -lion -lqdMetaData -lMpeg4SwEncoder
+libOmxSwVencMpeg4_la_LDFLAGS += -llog  -lcutils  -lglib-2.0 -lion -lMpeg4SwEncoder
 libOmxSwVencMpeg4_la_LDFLAGS += -L$(top_builddir)/libplatformconfig -L$(top_builddir)/libc2dcolorconvert
 libOmxSwVencMpeg4_la_LDFLAGS += -lplatformconfig  -lc2dcolorconvert
 endif
