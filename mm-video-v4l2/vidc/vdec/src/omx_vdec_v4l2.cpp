@@ -6610,7 +6610,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
     struct gbm_bo *bo = NULL;
     int bo_fd = -1, meta_fd = -1;
     if (!op_buf_gbm_info || dev_fd < 0 ) {
-        DEBUG_PRINT_ERROR("Invalid arguments to alloc_map_ion_memory");
+        DEBUG_PRINT_ERROR("Invalid arguments to alloc_map_gbm_memory");
         return FALSE;
     }
 
