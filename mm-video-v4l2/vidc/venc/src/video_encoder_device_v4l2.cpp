@@ -4187,9 +4187,9 @@ bool venc_dev::venc_get_profile_level(OMX_U32 *eProfile,OMX_U32 *eLevel)
             case V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE:
                 *eProfile = QOMX_VIDEO_AVCProfileConstrainedBaseline;
                 break;
-            case V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_HIGH:
+            /*case V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_HIGH:
                 *eProfile = QOMX_VIDEO_AVCProfileConstrainedHigh;
-                break;
+                break;*/
             case V4L2_MPEG_VIDEO_H264_PROFILE_MAIN:
                 *eProfile = OMX_VIDEO_AVCProfileMain;
                 break;
@@ -4267,9 +4267,9 @@ bool venc_dev::venc_get_profile_level(OMX_U32 *eProfile,OMX_U32 *eLevel)
             case V4L2_MPEG_VIDEO_H264_LEVEL_5_1:
                 *eLevel = OMX_VIDEO_AVCLevel51;
                 break;
-            case V4L2_MPEG_VIDEO_H264_LEVEL_5_2:
+            /*case V4L2_MPEG_VIDEO_H264_LEVEL_5_2:
                 *eLevel = OMX_VIDEO_AVCLevel52;
-                break;
+                break;*/
             default :
                 *eLevel = OMX_VIDEO_AVCLevelMax;
                 status = false;
