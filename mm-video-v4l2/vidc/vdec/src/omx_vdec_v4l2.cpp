@@ -7859,6 +7859,25 @@ bool omx_vdec::handle_mastering_display_color_info(void* data)
     return internal_disp_changed_flag;
 }
 
+#ifdef USE_GBM
+void omx_vdec::set_color_meta_data_in_bo(ColorMetaData *color_mdata, unsigned int buf_index)
+{
+    if (buf_index < drv_ctx.op_buf.actualcount &&
+        buf_index < MAX_NUM_INPUT_OUTPUT_BUFFERS &&
+        drv_ctx.op_buf_gbm_info[buf_index].bo_fd) {
+        int ret;
+        DEBUG_PRINT_LOW("set color meta for bo  %p %d",color_mdata,
+            drv_ctx.op_buf_gbm_info[buf_index].bo_fd);
+        ret = gbm_perform(GBM_PERFORM_SET_METADATA, drv_ctx.op_buf_gbm_info[buf_index].bo,
+                  GBM_METADATA_SET_COLOR_METADATA, (void *)color_mdata);
+        if (ret == GBM_ERROR_NONE)
+           DEBUG_PRINT_LOW("GBM_METADATA_SET_COLOR_META Success");
+        else
+           DEBUG_PRINT_ERROR("GBM_METADATA_SET_COLOR_META Failed");
+    }
+}
+#endif
+
 void omx_vdec::convert_color_aspects_to_metadata(ColorAspects& aspects, ColorMetaData &color_mdata)
 {
     PrimariesMap::const_iterator primary_it = mPrimariesMap.find(aspects.mPrimaries);
@@ -8235,8 +8254,29 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
                 setMetaData(private_handle, COLOR_METADATA, (void*)&color_mdata);
 #endif
                 set_histogram_metadata(private_handle);
-        }
+        } else {
+#ifdef USE_GBM
+            ColorAspects final_color_aspects;
+            HDRStaticInfo final_hdr_info;
+            memset(&final_color_aspects, 0, sizeof(final_color_aspects));
+            memset(&final_hdr_info, 0, sizeof(final_hdr_info));
+            get_preferred_color_aspects(final_color_aspects);
 
+            /* For VP8, always set the metadata on gralloc handle to 601-LR */
+            if (output_capability == V4L2_PIX_FMT_VP8) {
+                final_color_aspects.mPrimaries = ColorAspects::PrimariesBT601_6_525;
+                final_color_aspects.mRange = ColorAspects::RangeLimited;
+                final_color_aspects.mTransfer = ColorAspects::TransferSMPTE170M;
+                final_color_aspects.mMatrixCoeffs = ColorAspects::MatrixBT601_6;
+            }
+            get_preferred_hdr_info(final_hdr_info);
+            convert_color_aspects_to_metadata(final_color_aspects, color_mdata);
+            convert_hdr_info_to_metadata(final_hdr_info, color_mdata);
+            print_debug_hdr_color_info_mdata(&color_mdata);
+            print_debug_hdr10plus_metadata(color_mdata);
+            set_color_meta_data_in_bo(&color_mdata, buf_index);
+#endif
+        }
     }
 
     return reconfig_event_sent;
