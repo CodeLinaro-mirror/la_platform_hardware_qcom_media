@@ -144,6 +144,7 @@ as 0. This disables sending metadata via gralloc handle.
 
 #ifdef HYPERVISOR
 #define ioctl(x, y, z) hypv_ioctl(x, y, z)
+#define poll(x, y, z)  hypv_poll(x, y, z)
 #endif
 
 #define THUMBNAIL_YUV420P_8BIT 0x01
@@ -1818,10 +1819,7 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
     }
 
 #ifdef HYPERVISOR
-    hypv_callback_t hvfe_cb;
-    hvfe_cb.handler = async_message_process;
-    hvfe_cb.context = (void *)this;
-    drv_ctx.video_driver_fd = hypv_open(device_name, O_RDWR, &hvfe_cb);
+    drv_ctx.video_driver_fd = hypv_open(device_name, O_RDWR);
 #else
     drv_ctx.video_driver_fd = open(device_name, O_RDWR);
 #endif
@@ -1840,7 +1838,6 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
         return OMX_ErrorInsufficientResources;
     }
     ret = subscribe_to_events(drv_ctx.video_driver_fd);
-#ifndef HYPERVISOR
     if (!ret) {
         async_thread_created = true;
         ret = pthread_create(&async_thread_id,0,async_message_thread,this);
@@ -1850,7 +1847,6 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
         async_thread_created = false;
         return OMX_ErrorInsufficientResources;
     }
-#endif
 
 #ifdef OUTPUT_EXTRADATA_LOG
     outputExtradataFile = fopen (output_extradata_filename, "ab");

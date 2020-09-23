@@ -29,21 +29,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __HYPV_INTERCEPT_H__
 #define __HYPV_INTERCEPT_H__
 
-typedef void* HVFE_HANDLE;
-typedef int (*hvfe_callback_handler_t)(void *context, void *message);
-
-struct hvfe_callback_t
-{
-    hvfe_callback_handler_t handler;
-    void* context;
-};
-
-#ifndef __FILENAME__
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#endif
+#include <poll.h>
 
 int hypv_open(const char *str, int flag);
 int hypv_ioctl(int fd, int cmd, void *data);
+int hypv_poll(struct pollfd *fds, nfds_t nfds, int timeout);
 int hypv_close(int fd);
 
 #endif
