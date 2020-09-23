@@ -4,6 +4,10 @@ ACLOCAL_AMFLAGS = -I m4
 
 BUILD_COMPONENTS := libplatformconfig mm-core libc2dcolorconvert
 
+if TARGET_HYPERVISOR
+BUILD_COMPONENTS += hypv-intercept
+endif
+
 if BUILD_MM_VIDEO
 BUILD_COMPONENTS += mm-video-v4l2
 endif

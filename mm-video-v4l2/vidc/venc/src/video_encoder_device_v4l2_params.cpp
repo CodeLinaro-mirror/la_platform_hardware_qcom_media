@@ -33,6 +33,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef LOG_TAG
 #define LOG_TAG "OMX-VENC: venc_dev"
 
+#ifdef HYPERVISOR
+#include "hypv_intercept.h"
+#define ioctl(x, y, z) hypv_ioctl(x, y, z)
+#endif
+
 void venc_dev::venc_get_consumer_usage(OMX_U32* usage)
 {
 

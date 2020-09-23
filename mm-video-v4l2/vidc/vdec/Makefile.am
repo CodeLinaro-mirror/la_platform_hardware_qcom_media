@@ -24,6 +24,10 @@ AM_CPPFLAGS += -DPROCESS_EXTRADATA_IN_OUTPUT_PORT
 AM_CPPFLAGS += -DNATIVE_BASE_DISABLE
 AM_CPPFLAGS += -D__LINUX__
 
+if TARGET_HYPERVISOR
+AM_CPPFLAGS += -DHYPERVISOR
+AM_CPPFLAGS += -I$(top_srcdir)/hypv-intercept/
+endif
 #AM_CPPFLAGS += "-include stdint.h"
 AM_CPPFLAGS += "-Dstrlcpy=g_strlcpy"
 AM_CPPFLAGS += "-Dstrlcat=g_strlcat"
@@ -97,4 +101,9 @@ libOmxSwVdec_la_LDFLAGS = -module -shared -avoid-version
 libOmxSwVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lqdMetaData -lswvdec
 libOmxSwVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert
 libOmxSwVdec_la_LDFLAGS += -lc2dcolorconvert
+endif
+
+if TARGET_HYPERVISOR
+libOmxVdec_la_LDFLAGS += -L$(top_builddir)/hypv-intercept
+libOmxVdec_la_LDFLAGS += -lhypv_intercept
 endif

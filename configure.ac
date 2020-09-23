@@ -111,6 +111,14 @@ AC_ARG_ENABLE([build-swcodec],
                 [Enable conditional compile for build software codec [default=no]]),
         [build_swcodec="${enableval}"])
 
+AC_ARG_ENABLE([target-hypervisor],
+	AC_HELP_STRING([--enable-target-hypervisor],
+		[Enable conditional compile for target hypervisor [default=no]]),
+	[target_hypervisor="${enableval}"],
+	target_hypervisor=no)
+
+AM_CONDITIONAL(TARGET_HYPERVISOR, test "x$target_hypervisor" = "xyes")
+
 AC_ARG_WITH([sanitized-headers],
         [AS_HELP_STRING([--with-sanitized-headers=DIR],[location of the sanitized Linux kernel headers])],
         [CPPFLAGS="$CPPFLAGS -I $withval"])
@@ -213,4 +221,10 @@ AC_CONFIG_FILES([ \
         mm-video-v4l2/vidc/venc/Makefile \
         mm-video-v4l2/vidc/vdec/Makefile \
         ])
+AC_OUTPUT
+
+AM_COND_IF( [TARGET_HYPERVISOR], [
+AC_CONFIG_FILES([ \
+        hypv-intercept/Makefile \
+        ])])
 AC_OUTPUT
