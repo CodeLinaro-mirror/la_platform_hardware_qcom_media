@@ -2064,6 +2064,14 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
 
         m_state = OMX_StateLoaded;
 
+        m_client_extradata |= EXTRADATA_DEFAULT;
+        eRet = enable_extradata(m_client_extradata);
+        if (eRet != OMX_ErrorNone) {
+          DEBUG_PRINT_ERROR("Enable default extra data failed");
+        } else {
+          DEBUG_PRINT_INFO("omx_vdec enable default extra data successfully");
+        }
+
         eRet = get_buffer_req(&drv_ctx.ip_buf);
         DEBUG_PRINT_HIGH("Input Buffer Size =%u",(unsigned int)drv_ctx.ip_buf.buffer_size);
         get_buffer_req(&drv_ctx.op_buf);
