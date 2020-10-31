@@ -52,6 +52,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
+#ifdef HYPERVISOR
+#include "hypv_intercept.h"
+#endif
 #include <media/hardware/HardwareAPI.h>
 #include <sys/eventfd.h>
 #include "PlatformConfig.h"
@@ -138,6 +141,11 @@ as 0. This disables sending metadata via gralloc handle.
 */
 #define HDR10_SETMETADATA_ENABLE 0
 #define DEC_HDR_DISABLE_FLAG 0x1
+
+#ifdef HYPERVISOR
+#define ioctl(x, y, z) hypv_ioctl(x, y, z)
+#define poll(x, y, z)  hypv_poll(x, y, z)
+#endif
 
 #define THUMBNAIL_YUV420P_8BIT 0x01
 #define THUMBNAIL_YUV420P_10BIT 0x02
@@ -872,8 +880,12 @@ omx_vdec::~omx_vdec()
 
     unsubscribe_to_events(drv_ctx.video_driver_fd);
     close(m_poll_efd);
+#ifdef HYPERVISOR
+    hypv_close(drv_ctx.video_driver_fd);
+#else
     close(drv_ctx.video_driver_fd);
     clear_hdr10plusinfo();
+#endif
     pthread_mutex_destroy(&m_lock);
     pthread_mutex_destroy(&c_lock);
     pthread_mutex_destroy(&buf_lock);
@@ -1806,7 +1818,11 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
         role = (OMX_STRING)"OMX.qcom.video.decoder.vp9";
     }
 
+#ifdef HYPERVISOR
+    drv_ctx.video_driver_fd = hypv_open(device_name, O_RDWR);
+#else
     drv_ctx.video_driver_fd = open(device_name, O_RDWR);
+#endif
 
     DEBUG_PRINT_INFO("component_init: %s : fd=%d", role, drv_ctx.video_driver_fd);
 
@@ -2047,6 +2063,14 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
         drv_ctx.idr_only_decoding = 0;
 
         m_state = OMX_StateLoaded;
+
+        m_client_extradata |= EXTRADATA_DEFAULT;
+        eRet = enable_extradata(m_client_extradata);
+        if (eRet != OMX_ErrorNone) {
+          DEBUG_PRINT_ERROR("Enable default extra data failed");
+        } else {
+          DEBUG_PRINT_INFO("omx_vdec enable default extra data successfully");
+        }
 
         eRet = get_buffer_req(&drv_ctx.ip_buf);
         DEBUG_PRINT_HIGH("Input Buffer Size =%u",(unsigned int)drv_ctx.ip_buf.buffer_size);
@@ -6726,6 +6750,9 @@ bool omx_vdec::alloc_map_ion_memory(OMX_U32 buffer_size, vdec_ion *ion_info, int
         return false;
     }
 
+#ifdef HYPERVISOR
+    flag = 0;
+#endif
     ion_info->alloc_data.flags = flag;
     ion_info->alloc_data.len = buffer_size;
 

@@ -22,6 +22,11 @@ AM_CPPFLAGS += -D_ANDROID_ICS_
 AM_CPPFLAGS += -D_LINUX_
 AM_CPPFLAGS += -DSWENC_ROTATION_DISABLED
 
+if TARGET_HYPERVISOR
+AM_CPPFLAGS += -DHYPERVISOR
+AM_CPPFLAGS += -I$(top_srcdir)/hypv-intercept/
+endif
+
 AM_CPPFLAGS += -DUSE_ION
 AM_CPPFLAGS += -Wno-enum-compare
 #AM_CPPFLAGS += "-include stdint.h"
@@ -106,4 +111,9 @@ libOmxSwVencMpeg4_la_LDFLAGS = -module -shared -avoid-version
 libOmxSwVencMpeg4_la_LDFLAGS += -llog  -lcutils  -lglib-2.0 -lion -lqdMetaData -lMpeg4SwEncoder
 libOmxSwVencMpeg4_la_LDFLAGS += -L$(top_builddir)/libplatformconfig -L$(top_builddir)/libc2dcolorconvert
 libOmxSwVencMpeg4_la_LDFLAGS += -lplatformconfig  -lc2dcolorconvert
+endif
+
+if TARGET_HYPERVISOR
+libOmxVenc_la_LDFLAGS += -L$(top_builddir)/hypv-intercept
+libOmxVenc_la_LDFLAGS += -lhypv_intercept
 endif

@@ -56,6 +56,11 @@ extern "C" {
 
 using namespace android;
 
+#ifdef HYPERVISOR
+#include "hypv_intercept.h"
+#define ioctl(x, y, z) hypv_ioctl(x, y, z)
+#endif
+
 /* ======================================================================
    FUNCTION
    omx_vdec::GetParameter
