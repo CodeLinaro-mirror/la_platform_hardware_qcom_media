@@ -30,5 +30,15 @@ include hardware/qcom/media/conf_files/$(TARGET_BOARD_PLATFORM)/$(TARGET_BOARD_P
 
 endif
 
+#---------------------------------------------------------------------------------------------------
+# Runtime Codec2.0 enablement
+#---------------------------------------------------------------------------------------------------
+# TODO(PC): Override ccodec selection option back to defult (4).
+#           QSSI is forcing this to '1'. Must be reverted
+ifeq ($(call is-board-platform-in-list, lahaina holi msmnile), true)
+    $(warning "Default Codec2.0 Enabled")
+    PRODUCT_PROPERTY_OVERRIDES += debug.stagefright.ccodec=4
+else
 #Vendor property to enable Codec2 for audio and OMX for Video
-PRODUCT_PROPERTY_OVERRIDES += debug.stagefright.ccodec=1
+    PRODUCT_PROPERTY_OVERRIDES += debug.stagefright.ccodec=1
+endif
