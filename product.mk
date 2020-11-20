@@ -1,4 +1,4 @@
-MSM_VIDC_TARGET_LIST := kona lito bengal msmnile
+MSM_VIDC_TARGET_LIST := kona lito bengal msmnile sm6150
 
 ifeq ($(call is-board-platform-in-list, $(QCOM_BOARD_PLATFORMS)),true)
 
@@ -35,7 +35,7 @@ endif
 #---------------------------------------------------------------------------------------------------
 # TODO(PC): Override ccodec selection option back to defult (4).
 #           QSSI is forcing this to '1'. Must be reverted
-ifeq ($(call is-board-platform-in-list, lahaina holi msmnile), true)
+ifeq ($(call is-board-platform-in-list, lahaina holi msmnile sm6150), true)
     $(warning "Default Codec2.0 Enabled")
     PRODUCT_PROPERTY_OVERRIDES += debug.stagefright.ccodec=4
 else
