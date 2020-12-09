@@ -18,6 +18,9 @@ ifeq ($(VIDC_STUB_HAL),false)
 include $(QCOM_MEDIA_ROOT)/libplatformconfig/Android.mk
 include $(QCOM_MEDIA_ROOT)/mm-video-v4l2/Android.mk
 include $(QCOM_MEDIA_ROOT)/libc2dcolorconvert/Android.mk
+ifeq ($(ENABLE_HYP),true)
+include $(QCOM_MEDIA_ROOT)/hypv-intercept/Android.mk
+endif
 #disable omx media-prop, as Auto Android R always uses the script from codec2
 #ifeq ($(HW_CODEC2_ENABLED),false)
 #include $(QCOM_MEDIA_ROOT)/media-prop/Android.mk
