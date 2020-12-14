@@ -2082,9 +2082,6 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
             DEBUG_PRINT_ERROR("component_init(): message_thread_dec creation failed");
             msg_thread_created = false;
             eRet = OMX_ErrorInsufficientResources;
-        } else if (secure_mode) {
-            this->post_event(PREFETCH_PIXEL_BUFFER_COUNT, m_dec_secure_prefetch_size_output, OMX_COMPONENT_GENERATE_ION_PREFETCH_PIXEL);
-            this->post_event(PREFETCH_NON_PIXEL_BUFFER_COUNT, m_dec_secure_prefetch_size_internal, OMX_COMPONENT_GENERATE_ION_PREFETCH_NON_PIXEL);
         }
     }
 
