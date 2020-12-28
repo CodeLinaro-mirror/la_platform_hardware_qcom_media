@@ -2724,6 +2724,7 @@ bool omx_vdec::execute_output_flush()
                       buf_index < MAX_NUM_INPUT_OUTPUT_BUFFERS) {
                     buffer = m_out_mem_ptr + buf_index;
                 } else {
+                    pthread_mutex_unlock(&m_lock);
                     DEBUG_PRINT_ERROR("Invalid output buffer index: %d", buf_index);
                     return false;
                 }
