@@ -47,8 +47,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ui/GraphicBufferAllocator.h>
 #include <hardware/gralloc.h>
 #endif
+#ifndef _LINUX_
 /* def: GET_VT_TIMESTAMP */
 #include <qdMetaData.h>
+#endif
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -2260,11 +2262,13 @@ bool omx_venc::dev_empty_buf
                 size = handle->size;
                 if (m_bUseAVTimerTimestamps) {
                     uint64_t avTimerTimestampNs = bufhdr->nTimeStamp * 1000;
+#ifndef _LINUX_
                     if (getMetaData(handle, GET_VT_TIMESTAMP, &avTimerTimestampNs) == 0
                             && avTimerTimestampNs > 0) {
                         bufhdr->nTimeStamp = avTimerTimestampNs / 1000;
                         DEBUG_PRINT_LOW("AVTimer TS: %llu us", (unsigned long long)bufhdr->nTimeStamp);
                     }
+#endif
                 }
                 if (set_format)
                 {
