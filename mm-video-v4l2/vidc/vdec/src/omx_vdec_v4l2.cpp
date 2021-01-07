@@ -2117,11 +2117,18 @@ int omx_vdec::log_output_buffers(OMX_BUFFERHEADERTYPE *buffer) {
         }
     }
 
-    buf_index = buffer - m_out_mem_ptr;
-    bufaddr = (char *)drv_ctx.ptr_outputbuffer[buf_index].bufferaddr;
+    vdec_bufferpayload *vdec_buf = NULL;
+    if (client_buffers.is_color_conversion_enabled()) {
+      buf_index = buffer - m_intermediate_out_mem_ptr;
+      vdec_buf = &drv_ctx.ptr_intermediate_outputbuffer[buf_index];
+    } else {
+      buf_index = buffer - m_out_mem_ptr;
+      vdec_buf = &drv_ctx.ptr_outputbuffer[buf_index];
+    }
+    bufaddr = (char *)vdec_buf->bufferaddr;
     if (dynamic_buf_mode && !secure_mode) {
-        bufaddr = ion_map(drv_ctx.ptr_outputbuffer[buf_index].pmem_fd,
-                          drv_ctx.ptr_outputbuffer[buf_index].buffer_len);
+        bufaddr = ion_map(vdec_buf->pmem_fd,
+                          vdec_buf->buffer_len);
         //mmap returns (void *)-1 on failure and sets error code in errno.
         if (bufaddr == MAP_FAILED) {
             DEBUG_PRINT_ERROR("mmap failed - errno: %d", errno);
@@ -2222,8 +2229,8 @@ int omx_vdec::log_output_buffers(OMX_BUFFERHEADERTYPE *buffer) {
     }
 
     if (dynamic_buf_mode && !secure_mode) {
-        ion_unmap(drv_ctx.ptr_outputbuffer[buf_index].pmem_fd, bufaddr,
-                  drv_ctx.ptr_outputbuffer[buf_index].buffer_len);
+        ion_unmap(vdec_buf->pmem_fd, bufaddr,
+                  vdec_buf->buffer_len);
     }
     return 0;
 }
