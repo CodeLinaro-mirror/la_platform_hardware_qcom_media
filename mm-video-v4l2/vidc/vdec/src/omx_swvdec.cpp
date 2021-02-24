@@ -56,7 +56,12 @@
 #include <glib.h>
 #define strlcpy g_strlcpy
 #endif
+#ifdef _LINUX_
+/* For some mpeg4 dec case, need 6 buffers for pipeline working well */
+#define  SWDEC_BUFFER_OP_COUNT_MIN 6
+#else
 #define  SWDEC_BUFFER_OP_COUNT_MIN 4
+#endif
 #ifndef MAX3
 #define MAX3(a, b, c)       MAX(MAX(a, b), c)
 #endif /* !MAX3 */
