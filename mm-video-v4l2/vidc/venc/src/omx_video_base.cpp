@@ -41,7 +41,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __STDC_FORMAT_MACROS //enables the format specifiers in inttypes.h
 #include <inttypes.h>
 #include <string.h>
+#ifndef _LINUX_
 #include <qdMetaData.h>
+#endif
 #include "omx_video_base.h"
 #include <stdlib.h>
 #include <errno.h>
@@ -5024,10 +5026,12 @@ void omx_video::omx_release_meta_buffer(OMX_BUFFERHEADERTYPE *buffer)
 bool is_ubwc_interlaced(private_handle_t *handle) {
     int interlace_flag = 0;
 
+#ifndef _LINUX_
     if (getMetaData(const_cast<private_handle_t *>(handle),
                   GET_PP_PARAM_INTERLACED, &interlace_flag)) {
         interlace_flag = 0;
     }
+#endif
     return (handle->format == HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS_UBWC) &&
                 !!interlace_flag;
 }
@@ -5324,11 +5328,13 @@ OMX_ERRORTYPE omx_video::convert_queue_buffer(OMX_HANDLETYPE hComp,
                         }
 
                         uint64_t avTimerTimestampNs = psource_frame->nTimeStamp * 1000;
+#ifndef _LINUX_
                         if (getMetaData(handle, GET_VT_TIMESTAMP, &avTimerTimestampNs) == 0
                                 && avTimerTimestampNs > 0) {
                             psource_frame->nTimeStamp = avTimerTimestampNs / 1000;
                             DEBUG_PRINT_LOW("C2d AVTimer TS : %llu us", (unsigned long long)psource_frame->nTimeStamp);
                         }
+#endif
                     }
                 }
                 unsigned int buf_size = 0;
