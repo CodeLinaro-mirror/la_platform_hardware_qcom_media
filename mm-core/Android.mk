@@ -62,6 +62,9 @@ ifeq ($(call is-platform-sdk-version-at-least,27),true) # O-MR1
 OMXCORE_CFLAGS += -D_ANDROID_O_MR1_DIVX_CHANGES
 endif
 
+ifneq (,$(filter sdm429w_law, $(TARGET_PRODUCT)))
+OMXCORE_CFLAGS += -DCODECS_NOT_IMPLEMENTED
+endif
 #===============================================================================
 #             Deploy the headers that can be exposed
 #===============================================================================

@@ -92,6 +92,7 @@ omx_core_cb_type core[] =
       "video_encoder.avc"
     }
   },
+#ifndef CODECS_NOT_IMPLEMENTED
   {
     "OMX.qti.video.decoder.mpeg4sw",
     NULL, // Create instance function
@@ -148,6 +149,7 @@ omx_core_cb_type core[] =
 #endif
     }
   },
+#endif
   {
     "OMX.qcom.video.encoder.mpeg4sw",
     NULL, // Create instance function
