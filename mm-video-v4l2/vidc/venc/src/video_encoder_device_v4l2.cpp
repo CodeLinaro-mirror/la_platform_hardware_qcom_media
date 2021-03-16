@@ -4363,7 +4363,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                     if (!streaming[OUTPUT_PORT]) {
                         // Moment of truth... actual colorspace is known here..
 #ifdef __LIBGBM__
-                        if (gbm_perform(GBM_PERFORM_GET_METADATA, handle, GBM_METADATA_GET_COLOR_SPACE, \
+                        if (gbm_perform(GBM_PERFORM_GET_METADATA, handle, GBM_METADATA_GET_COLOR_METADATA, \
                                              &colorData) == GBM_ERROR_NONE) {
 #else
                         if (getMetaData(handle, GET_COLOR_METADATA, &colorData) == 0) {
