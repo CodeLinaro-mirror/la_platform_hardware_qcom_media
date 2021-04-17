@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2018, Linux Foundation. All rights reserved.
+Copyright (c) 2010-2018, 2021 Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -2420,7 +2420,15 @@ OMX_ERRORTYPE  omx_video::get_config(OMX_IN OMX_HANDLETYPE      hComp,
                 VALIDATE_OMX_VENDOR_EXTENSION_PARAM_DATA(ext);
                 return get_vendor_extension_config(ext);
             }
-
+        case OMX_QTIIndexConfigFrameIPBQPRange:
+        {
+               VALIDATE_OMX_PARAM_DATA(configData, OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE);
+               OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE *layerConfig =
+                            (OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE *)configData;
+               DEBUG_PRINT_LOW("get_config: OMX_QTIIndexConfigFrameIPBQPRange");
+               memcpy(configData, &m_sFrameQPRange, sizeof(m_sFrameQPRange));
+               break;
+        }
         default:
             DEBUG_PRINT_ERROR("ERROR: unsupported index %d", (int) configIndex);
             return OMX_ErrorUnsupportedIndex;
@@ -2530,6 +2538,11 @@ OMX_ERRORTYPE  omx_video::get_extension_index(OMX_IN OMX_HANDLETYPE      hComp,
 
     if (extn_equals(paramName, OMX_QTI_INDEX_CONFIG_VIDEO_ROIINFO)) {
         *indexType = (OMX_INDEXTYPE)OMX_QTIIndexConfigVideoRoiInfo;
+        return OMX_ErrorNone;
+    }
+
+    if (extn_equals(paramName, OMX_QTI_INDEX_CONFIG_VIDEO_IPB_ROIINFO)) {
+        *indexType = (OMX_INDEXTYPE)OMX_QTIIndexConfigVideoIPBRoiInfo;
         return OMX_ErrorNone;
     }
 

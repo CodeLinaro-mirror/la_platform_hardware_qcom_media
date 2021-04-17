@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2018, The Linux Foundation. All rights reserved.
+Copyright (c) 2010-2018, 2021 The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -294,6 +294,9 @@ OMX_ERRORTYPE omx_venc::component_init(OMX_STRING role)
 
     OMX_INIT_STRUCT(&m_sSessionQPRange, OMX_QCOM_VIDEO_PARAM_IPB_QPRANGETYPE);
     m_sSessionQPRange.nPortIndex = (OMX_U32) PORT_INDEX_OUT;
+
+    OMX_INIT_STRUCT(&m_sFrameQPRange, OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE);
+    m_sFrameQPRange.nPortIndex = (OMX_U32) PORT_INDEX_OUT;
 
     OMX_INIT_STRUCT(&m_sAVCSliceFMO, OMX_VIDEO_PARAM_AVCSLICEFMO);
     m_sAVCSliceFMO.nPortIndex = (OMX_U32) PORT_INDEX_OUT;
@@ -2057,6 +2060,15 @@ OMX_ERRORTYPE  omx_venc::set_config(OMX_IN OMX_HANDLETYPE      hComp,
                 }
                 break;
             }
+        case OMX_QTIIndexConfigVideoIPBRoiInfo:
+            {
+                VALIDATE_OMX_PARAM_DATA(configData, OMX_QTI_VIDEO_CONFIG_IPB_ROIINFO);
+                if (!handle->venc_set_config(configData, (OMX_INDEXTYPE)OMX_QTIIndexConfigVideoIPBRoiInfo)) {
+                    DEBUG_PRINT_ERROR("Failed to set OMX_QTIIndexConfigVideoIPBRoiInfo");
+                    return OMX_ErrorUnsupportedSetting;
+                }
+                break;
+            }
         case OMX_IndexConfigTimePosition:
             {
                 OMX_TIME_CONFIG_TIMESTAMPTYPE* pParam =
@@ -2181,7 +2193,18 @@ OMX_ERRORTYPE  omx_venc::set_config(OMX_IN OMX_HANDLETYPE      hComp,
                 }
                 break;
             }
-
+        case OMX_QTIIndexConfigFrameIPBQPRange:
+        {
+            VALIDATE_OMX_PARAM_DATA(configData, OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE);
+            OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE* pParam =
+                (OMX_QCOM_VIDEO_CONFIG_IPB_QPRANGETYPE*) configData;
+            if (!handle->venc_set_config(pParam, (OMX_INDEXTYPE)OMX_QTIIndexConfigFrameIPBQPRange)) {
+                DEBUG_PRINT_ERROR("ERROR: Setting OMX_QTIIndexConfigFrameIPBQPRange failed");
+                return OMX_ErrorUnsupportedSetting;
+            }
+            memcpy(&m_sFrameQPRange, pParam, sizeof(m_sFrameQPRange));
+            break;
+        }
         default:
             DEBUG_PRINT_ERROR("ERROR: unsupported index %d", (int) configIndex);
             break;
