@@ -2925,12 +2925,12 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
 #endif
                     } // Check OUTPUT Streaming
 
+                    unsigned long long int compression_ratio = 1 << 16;
 #ifndef _LINUX_
                     if (!venc_get_cvp_metadata(handle, &buf))
                         return false;
 
                     struct UBWCStats cam_ubwc_stats[2];
-                    unsigned long long int compression_ratio = 1 << 16;
 
                     if (getMetaData(handle, GET_UBWC_CR_STATS_INFO, (void *)cam_ubwc_stats) == 0) {
                         if (cam_ubwc_stats[0].bDataValid) {
@@ -2986,6 +2986,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                         // Clear SET_VIDEO_PERF_MODE in buffer handle
                         setMetaData(handle, SET_VIDEO_PERF_MODE, 0);
                     }
+#endif
                     fd = handle->fd;
                     plane[0].data_offset = 0;
                     plane[0].length = handle->size;
@@ -2996,7 +2997,6 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                     DEBUG_PRINT_LOW("venc_empty_buf: Opaque camera buf: fd = %d "
                                 ": filled %d of %d format 0x%lx (%s) CR %d", fd, plane[0].bytesused,
                                 plane[0].length, m_sVenc_cfg.inputformat, v4l2ColorFormatStr, plane[0].reserved[MSM_VIDC_COMP_RATIO]);
-#endif
                 }
             } else {
                 // Metadata mode
