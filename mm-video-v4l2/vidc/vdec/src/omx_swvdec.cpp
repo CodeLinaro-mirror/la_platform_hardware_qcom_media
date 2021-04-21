@@ -56,7 +56,12 @@
 #include <glib.h>
 #define strlcpy g_strlcpy
 #endif
+#ifdef _LINUX_
+/* For some mpeg4 dec case, need 6 buffers for pipeline working well */
+#define  SWDEC_BUFFER_OP_COUNT_MIN 6
+#else
 #define  SWDEC_BUFFER_OP_COUNT_MIN 4
+#endif
 #ifndef MAX3
 #define MAX3(a, b, c)       MAX(MAX(a, b), c)
 #endif /* !MAX3 */
@@ -4847,7 +4852,10 @@ int omx_swvdec::gbm_memory_alloc_map(OMX_U32 w,OMX_U32 h,int dev_fd,
       goto gbm_memory_alloc_map_exit;
     }
 
-    bo_fd = gbm_bo_get_fd(bo);
+    /* TODO: won't use gbm_bo_get_fd() till it's redefined definitely. */
+    //bo_fd = gbm_bo_get_fd(bo);
+    /* Interim solution, just for smooth switch to new interface. */
+    bo_fd = bo->ion_fd;
     if (bo_fd < 0) {
       OMX_SWVDEC_LOG_ERROR("Get bo fd failed");
       gbm_bo_destroy(bo);
