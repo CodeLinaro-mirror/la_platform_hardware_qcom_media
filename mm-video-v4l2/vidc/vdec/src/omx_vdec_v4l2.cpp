@@ -6465,6 +6465,25 @@ OMX_ERRORTYPE omx_vdec::free_output_buffer(OMX_BUFFERHEADERTYPE *bufferHdr,
             free_extradata();
             }
         } else {
+            /*
+             * releasing C2d input buffers i.e intermediate buffers allocated by omx
+             */
+            if (omx_ptr_outputbuffer[index].pmem_fd > 0 && !ouput_egl_buffers && !m_use_output_pmem) {
+                if (!secure_mode) {
+                    ion_unmap(omx_ptr_outputbuffer[index].pmem_fd,
+                             omx_ptr_outputbuffer[index].bufferaddr,
+                             omx_ptr_outputbuffer[index].mmaped_size);
+                             omx_ptr_outputbuffer[index].bufferaddr = NULL;
+                             omx_ptr_outputbuffer[index].mmaped_size = 0;
+                }
+#ifdef USE_GBM
+                free_gbm_memory(&omx_op_buf_gbm_info[index]);
+#elif defined USE_ION
+                free_ion_memory(&omx_op_buf_ion_info[index]);
+#endif
+                omx_ptr_outputbuffer[index].pmem_fd = -1;
+            }
+
             client_buffers.allocated_count--;
             DEBUG_PRINT_HIGH("free_output_buffer: allocated_count decremented: %d",
                     client_buffers.allocated_count);
