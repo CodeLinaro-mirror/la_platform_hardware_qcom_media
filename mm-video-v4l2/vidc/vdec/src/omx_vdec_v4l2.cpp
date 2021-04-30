@@ -594,7 +594,8 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
     allocate_native_handle(false),
     client_set_fps(false),
     stereo_output_mode(HAL_NO_3D),
-    m_last_rendered_TS(-1),
+    m_prev_timestampUs(0),
+    m_prev_frame_rendered(false),
     m_dec_hfr_fps(0),
     m_dec_secure_prefetch_size_internal(0),
     m_dec_secure_prefetch_size_output(0),
@@ -2515,16 +2516,25 @@ OMX_ERRORTYPE  omx_vdec::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
         if (cmd == OMX_CommandFlush && (param1 == OMX_CORE_INPUT_PORT_INDEX ||
                     param1 == OMX_ALL)) {
             if (android_atomic_add(0, &m_queued_codec_config_count) > 0) {
-               struct timespec ts;
-
-               clock_gettime(CLOCK_REALTIME, &ts);
-               ts.tv_sec += 1;
-               DEBUG_PRINT_LOW("waiting for %d EBDs of CODEC CONFIG buffers ",
+                struct timespec ts;
+                int rc = 0;
+#ifdef __BIONIC__
+                clock_gettime(CLOCK_MONOTONIC, &ts);
+#elif __GLIBC__
+                clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+                ts.tv_sec += 1;
+                DEBUG_PRINT_LOW("waiting for %d EBDs of CODEC CONFIG buffers ",
                        m_queued_codec_config_count);
-               BITMASK_SET(&m_flags, OMX_COMPONENT_FLUSH_DEFERRED);
-               if (sem_timedwait(&m_safe_flush, &ts)) {
-                   DEBUG_PRINT_ERROR("Failed to wait for EBDs of CODEC CONFIG buffers");
-               }
+                BITMASK_SET(&m_flags, OMX_COMPONENT_FLUSH_DEFERRED);
+#ifdef __BIONIC__
+                rc = sem_timedwait_monotonic_np(&m_safe_flush, &ts);
+#elif __GLIBC__
+                rc = sem_timedwait(&m_safe_flush, &ts);
+#endif
+                if (rc) {
+                    DEBUG_PRINT_ERROR("Failed to wait for EBDs of CODEC CONFIG buffers");
+                }
                BITMASK_CLEAR (&m_flags,OMX_COMPONENT_FLUSH_DEFERRED);
             }
         }
@@ -2712,10 +2722,7 @@ bool omx_vdec::execute_output_flush()
     pthread_mutex_lock(&m_lock);
     DEBUG_PRINT_LOW("Initiate Output Flush");
 
-    //reset last render TS
-    if(m_last_rendered_TS > 0) {
-        m_last_rendered_TS = 0;
-    }
+    m_prev_timestampUs = 0;
 
     while (m_ftb_q.m_size) {
         m_ftb_q.pop_entry(&p1,&p2,&ident);
@@ -3342,6 +3349,27 @@ OMX_ERRORTYPE  omx_vdec::set_config(OMX_IN OMX_HANDLETYPE      hComp,
         VALIDATE_OMX_PARAM_DATA(configData, DescribeHDR10PlusInfoParams);
         if (!store_vp9_hdr10plusinfo((DescribeHDR10PlusInfoParams *)configData)) {
             DEBUG_PRINT_ERROR("Failed to set hdr10plus info");
+        }
+        return ret;
+
+    } else if ((int)configIndex == (int)OMX_IndexConfigLowLatency) {
+        OMX_CONFIG_BOOLEANTYPE *lowLatency = (OMX_CONFIG_BOOLEANTYPE *)configData;
+        DEBUG_PRINT_LOW("Set_config: low-latency %u",(uint32_t)lowLatency->bEnabled);
+
+        struct v4l2_control control;
+
+        control.id = V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_MODE;
+        if (lowLatency->bEnabled) {
+            control.value = V4L2_MPEG_MSM_VIDC_ENABLE;
+        } else {
+            control.value = V4L2_MPEG_MSM_VIDC_DISABLE;
+        }
+
+        if (ioctl(drv_ctx.video_driver_fd, VIDIOC_S_CTRL, &control)) {
+            DEBUG_PRINT_ERROR("Set low latency failed");
+            ret = OMX_ErrorUnsupportedSetting;
+        } else {
+            m_sParamLowLatency.bEnableLowLatencyMode = lowLatency->bEnabled;
         }
         return ret;
 
@@ -6227,37 +6255,35 @@ OMX_ERRORTYPE omx_vdec::fill_buffer_done(OMX_HANDLETYPE hComp,
         il_buffer = client_buffers.get_il_buf_hdr(buffer);
         OMX_U32 current_framerate = (int)(drv_ctx.frame_rate.fps_numerator / drv_ctx.frame_rate.fps_denominator);
 
-        if (il_buffer && m_last_rendered_TS >= 0) {
-            OMX_TICKS ts_delta = (OMX_TICKS)llabs(il_buffer->nTimeStamp - m_last_rendered_TS);
-            // Convert fps into ms value. 1 sec = 1000000 ms.
-            OMX_U64 target_ts_delta = m_dec_hfr_fps ? 1000000 / m_dec_hfr_fps : ts_delta;
+        if (il_buffer && m_dec_hfr_fps > 0 && buffer->nFilledLen > 0) {
+            uint64_t tsDeltaUs = llabs(il_buffer->nTimeStamp - m_prev_timestampUs);
+            double vsyncUs = 1e6/m_dec_hfr_fps;
+            double vsync_start = (static_cast<uint64_t>(il_buffer->nTimeStamp/vsyncUs)) * vsyncUs;
+            double vsync_end = vsync_start + vsyncUs;
+            bool render_frame = false;
 
-            // Current frame can be send for rendering if
-            // (a) current FPS is <=  60
-            // (b) is the next frame after the frame with TS 0
-            // (c) is the first frame after seek
-            // (d) the delta TS b\w two consecutive frames is > 16 ms
-            // (e) its TS is equal to previous frame TS
-            // (f) if marked EOS
-
-            if(current_framerate <= (OMX_U32)m_dec_hfr_fps || m_last_rendered_TS == 0 ||
-               il_buffer->nTimeStamp == 0 || ts_delta >= (OMX_TICKS)target_ts_delta||
-               ts_delta == 0 || (il_buffer->nFlags & OMX_BUFFERFLAG_EOS)) {
-               m_last_rendered_TS = il_buffer->nTimeStamp;
+            if ((static_cast<double>(il_buffer->nTimeStamp + tsDeltaUs) > (vsync_end + 1.0)) ||
+                 !m_prev_timestampUs || il_buffer->nFlags & OMX_BUFFERFLAG_EOS) {
+                render_frame = true;
+            }
+            // Render frames very close to boundaries of vsync interval
+            if ((abs(static_cast<double>(il_buffer->nTimeStamp) - vsync_start) < 1.0) ||
+                (abs(static_cast<double>(il_buffer->nTimeStamp) - vsync_end) < 1.0)) {
+                render_frame = true;
+            }
+            // Render frames for which ts_Delta == 0, only if previous frame was rendered.
+            if (tsDeltaUs == 0 && m_prev_frame_rendered) {
+                render_frame = true;
+            }
+            if (!render_frame) {
+                buffer->nFilledLen = 0;
+                m_prev_frame_rendered = false;
             } else {
-               //mark for droping
-               buffer->nFilledLen = 0;
+                m_prev_frame_rendered = true;
             }
 
-            DEBUG_PRINT_LOW(" -- %s Frame -- info:: fps(%d) lastRenderTime(%lld) bufferTs(%lld) ts_delta(%lld)",
-                              buffer->nFilledLen? "Rendering":"Dropping",current_framerate,m_last_rendered_TS,
-                              il_buffer->nTimeStamp,ts_delta);
-
-            //above code makes sure that delta b\w two consecutive frames is not
-            //greater than 16ms, slow-mo feature, so cap fps to max 60
-            if (current_framerate > (OMX_U32)m_dec_hfr_fps ) {
-                current_framerate = m_dec_hfr_fps;
-            }
+            m_prev_timestampUs = il_buffer->nTimeStamp;
+            DEBUG_PRINT_LOW(" -- %s Frame with bufferTs(%lld)", buffer->nFilledLen? "Rendering":"Dropping", il_buffer->nTimeStamp);
         }
 
         // add current framerate to gralloc meta data
@@ -6690,7 +6716,10 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
       return FALSE;
     }
 
-    bo_fd = gbm_bo_get_fd(bo);
+    /* TODO: won't use gbm_bo_get_fd() till it's redefined definitely. */
+    //bo_fd = gbm_bo_get_fd(bo);
+    /* Interim solution, just for smooth switch to new interface. */
+    bo_fd = bo->ion_fd;
     if (bo_fd < 0) {
       DEBUG_PRINT_ERROR("Get bo fd failed");
       gbm_bo_destroy(bo);
@@ -7230,7 +7259,11 @@ OMX_ERRORTYPE omx_vdec::update_portdef(OMX_PARAM_PORTDEFINITIONTYPE *portDefn)
             return OMX_ErrorHardware;
         }
         drv_ctx.ip_buf.mincount = control.value;
-        drv_ctx.ip_buf.actualcount = control.value;
+        // update actualcount only if it is small than mincount
+        if (drv_ctx.ip_buf.actualcount < drv_ctx.ip_buf.mincount){
+             DEBUG_PRINT_LOW("Updated actualcount same as mincount");
+             drv_ctx.ip_buf.actualcount = drv_ctx.ip_buf.mincount;
+        }
 
         portDefn->eDir =  OMX_DirInput;
         portDefn->nBufferCountActual = drv_ctx.ip_buf.actualcount;
@@ -7644,6 +7677,8 @@ void omx_vdec::convert_color_space_info(OMX_U32 primaries,
     switch (transfer) {
         case MSM_VIDC_TRANSFER_BT709_5:
         case MSM_VIDC_TRANSFER_601_6_525: // case MSM_VIDC_TRANSFER_601_6_625:
+        case MSM_VIDC_TRANSFER_BT_2020_10:
+        case MSM_VIDC_TRANSFER_BT_2020_12:
             aspects->mTransfer = ColorAspects::TransferSMPTE170M;
             break;
         case MSM_VIDC_TRANSFER_BT_470_6_M:
@@ -7993,6 +8028,9 @@ void omx_vdec::convert_hdr_info_to_metadata(HDRStaticInfo& hdr_info, ColorMetaDa
 
 void omx_vdec::get_preferred_color_aspects(ColorAspects& preferredColorAspects)
 {
+    OMX_U32 width = drv_ctx.video_resolution.frame_width;
+    OMX_U32 height = drv_ctx.video_resolution.frame_height;
+
     // For VPX, use client-color if specified.
     // For the rest, try to use the stream-color if present
     bool preferClientColor = (output_capability == V4L2_PIX_FMT_VP8 ||
@@ -8003,7 +8041,9 @@ void omx_vdec::get_preferred_color_aspects(ColorAspects& preferredColorAspects)
     const ColorAspects &defaultColor = preferClientColor ?
         m_internal_color_space.sAspects : m_client_color_space.sAspects;
 
-    if ((m_client_color_space.sAspects.mPrimaries == ColorAspects::PrimariesBT2020) && (dpb_bit_depth == MSM_VIDC_BIT_DEPTH_8)) {
+    if ((width >= 3840 || height >= 3840 || width * (int64_t)height >= 3840 * 1634) &&
+        (m_client_color_space.sAspects.mPrimaries == ColorAspects::PrimariesBT2020) &&
+        (dpb_bit_depth == MSM_VIDC_BIT_DEPTH_8)) {
         m_client_color_space.sAspects.mPrimaries = ColorAspects::PrimariesBT709_5;
         m_client_color_space.sAspects.mMatrixCoeffs = ColorAspects::MatrixBT709_5;
     }

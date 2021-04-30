@@ -4852,7 +4852,10 @@ int omx_swvdec::gbm_memory_alloc_map(OMX_U32 w,OMX_U32 h,int dev_fd,
       goto gbm_memory_alloc_map_exit;
     }
 
-    bo_fd = gbm_bo_get_fd(bo);
+    /* TODO: won't use gbm_bo_get_fd() till it's redefined definitely. */
+    //bo_fd = gbm_bo_get_fd(bo);
+    /* Interim solution, just for smooth switch to new interface. */
+    bo_fd = bo->ion_fd;
     if (bo_fd < 0) {
       OMX_SWVDEC_LOG_ERROR("Get bo fd failed");
       gbm_bo_destroy(bo);
