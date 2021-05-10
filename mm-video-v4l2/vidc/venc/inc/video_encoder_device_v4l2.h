@@ -44,7 +44,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vidc/media/msm_vidc_utils.h"
 #include <poll.h>
 #include <list>
+#ifndef _LINUX_
 #include <qdMetaData.h>
+#endif
 #include "color_metadata.h"
 
 #define TIMEOUT 5*60*1000
@@ -55,6 +57,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ENABLE_I_QP 0x1
 #define ENABLE_P_QP 0x2
 #define ENABLE_B_QP 0x4
+#define ENC_HDR_DISABLE_FLAG 0x2
 
 #define OMX_VIDEO_LEVEL_UNKNOWN 0
 
@@ -346,6 +349,7 @@ class venc_dev
         OMX_ERRORTYPE venc_set_bitrate_ratios();
         bool venc_validate_temporal_extn(OMX_VIDEO_PARAM_ANDROID_TEMPORALLAYERINGTYPE &temporalSettings);
         bool venc_get_output_log_flag();
+        int venc_cvp_log_buffers(const char *metadataName, uint32_t buffer_len, uint8_t *buf);
         int venc_output_log_buffers(const char *buffer_addr, int buffer_len, uint64_t timestamp);
         int venc_input_log_buffers(OMX_BUFFERHEADERTYPE *buffer, int fd, int plane_offset,
                         unsigned long inputformat, bool interlaced);
@@ -471,9 +475,11 @@ class venc_dev
         bool venc_set_grid_enable();
         bool venc_set_extradata_hdr10metadata(OMX_U32 omx_profile);
         bool venc_store_dynamic_config(OMX_INDEXTYPE type, OMX_PTR config);
+#ifndef _LINUX_
         bool venc_cvp_enable(private_handle_t *handle);
         bool venc_get_cvp_metadata(private_handle_t *handle, struct v4l2_buffer *buf);
         bool venc_set_cvp_skipratio_controls();
+#endif
         bool venc_superframe_enable(private_handle_t *handle);
         void venc_set_quality_boost(OMX_BOOL c2d_enable);
         bool reconfigure_avc_param(OMX_VIDEO_PARAM_AVCTYPE *param);
@@ -491,7 +497,9 @@ class venc_dev
 
         bool m_cvp_first_metadata;
         bool m_cvp_meta_enabled;
+#ifndef _LINUX_
         CVPMetadata cvpMetadata;
+#endif
         pthread_mutex_t pause_resume_mlock;
         pthread_cond_t pause_resume_cond;
         bool paused;

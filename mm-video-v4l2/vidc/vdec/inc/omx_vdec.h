@@ -49,7 +49,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstddef>
 #include <dlfcn.h>
 #include <cutils/atomic.h>
+#ifndef _LINUX_
 #include <qdMetaData.h>
+#endif
 #include <color_metadata.h>
 #define STRINGIFY_ENUMS
 #include "media/hardware/VideoAPI.h"
@@ -880,9 +882,10 @@ class omx_vdec: public qc_omx_component
         void extract_demux_addr_offsets(OMX_BUFFERHEADERTYPE *buf_hdr);
         OMX_ERRORTYPE handle_demux_data(OMX_BUFFERHEADERTYPE *buf_hdr);
         OMX_U32 count_MB_in_extradata(OMX_OTHER_EXTRADATATYPE *extra);
+#ifndef _LINUX_
         void set_histogram_metadata(private_handle_t *private_handle);
         struct VideoHistogramMetadata m_hist_metadata;
-
+#endif
         bool align_pmem_buffers(int pmem_fd, OMX_U32 buffer_size,
                 OMX_U32 alignment);
 #ifdef USE_ION
@@ -1204,7 +1207,8 @@ class omx_vdec: public qc_omx_component
         int log_output_buffers(OMX_BUFFERHEADERTYPE *);
         int log_cc_output_buffers(OMX_BUFFERHEADERTYPE *);
         void send_codec_config();
-        OMX_TICKS m_last_rendered_TS;
+        OMX_TICKS m_prev_timestampUs;
+        bool m_prev_frame_rendered;
         int32_t m_dec_hfr_fps;
         int32_t m_dec_secure_prefetch_size_internal;
         int32_t m_dec_secure_prefetch_size_output;
