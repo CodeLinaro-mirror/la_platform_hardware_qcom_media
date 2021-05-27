@@ -227,6 +227,7 @@ omx_video::omx_video():
     psource_frame(NULL),
     pdest_frame(NULL),
     secure_session(false),
+    enable_cma(false),
 #ifdef _UBWC_
     m_ubwc_supported(true),
 #else
@@ -308,6 +309,8 @@ omx_video::omx_video():
     strlcpy(m_platform, property_value, sizeof(m_platform));
     property_get("vendor.vidc.enc.profile.in", property_value, "0");
     profile_mode = !!atoi(property_value);
+    property_get("vendor.vidc.encoder.cma", property_value, "0");
+    enable_cma = !!atoi(property_value);
 #endif
 
     pthread_mutex_init(&m_buf_lock, NULL);
@@ -688,7 +691,10 @@ void omx_video::process_event_cb(void *ctxt)
 
 }
 
-
+bool omx_video::get_cma_status()
+{
+    return enable_cma;
+}
 
 
 /* ======================================================================
@@ -5085,7 +5091,7 @@ OMX_ERRORTYPE omx_video::ion_unmap(int fd, void *bufaddr, int len)
 bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
 {
     struct venc_ion buf_ion_info;
-    int rc=0;
+    int rc = 0;
 
     if (size <=0 || !ion_info) {
         DEBUG_PRINT_ERROR("Invalid input to alloc_map_ion_memory");
@@ -5101,10 +5107,16 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
 
     if(secure_session) {
         ion_info->alloc_data.len = (size + (SECURE_ALIGN - 1)) & ~(SECURE_ALIGN - 1);
-        ion_info->alloc_data.flags = flag;
-        ion_info->alloc_data.heap_id_mask = ION_HEAP(MEM_HEAP_ID);
-        if (ion_info->alloc_data.flags & ION_FLAG_CP_BITSTREAM) {
-            ion_info->alloc_data.heap_id_mask |= ION_HEAP(ION_SECURE_DISPLAY_HEAP_ID);
+        DEBUG_PRINT_LOW("encoder cma status %d", get_cma_status());
+        if (get_cma_status()) {
+            ion_info->alloc_data.flags = ION_FLAG_SECURE | ION_FLAG_CP_CAMERA_ENCODE ;
+            ion_info->alloc_data.heap_id_mask = ION_HEAP(ION_VIDEO_HEAP_ID);
+        } else {
+            ion_info->alloc_data.flags = flag;
+            ion_info->alloc_data.heap_id_mask = ION_HEAP(MEM_HEAP_ID);
+            if (ion_info->alloc_data.flags & ION_FLAG_CP_BITSTREAM) {
+                ion_info->alloc_data.heap_id_mask |= ION_HEAP(ION_SECURE_DISPLAY_HEAP_ID);
+            }
         }
         DEBUG_PRINT_HIGH("ION ALLOC sec buf: size %u flags %x",
                 (unsigned int)ion_info->alloc_data.len,
