@@ -7119,7 +7119,10 @@ bool venc_dev::venc_validate_temporal_settings() {
         return false;
     }
 
-    if (rate_ctrl.rcmode != V4L2_CID_MPEG_VIDC_VIDEO_RATE_CONTROL_VBR_CFR) {
+    if (rate_ctrl.rcmode != V4L2_CID_MPEG_VIDC_VIDEO_RATE_CONTROL_VBR_CFR &&
+        rate_ctrl.rcmode != V4L2_CID_MPEG_VIDC_VIDEO_RATE_CONTROL_MBR_CFR &&
+        rate_ctrl.rcmode != V4L2_CID_MPEG_VIDC_VIDEO_RATE_CONTROL_MBR_VFR &&
+        rate_ctrl.rcmode != V4L2_CID_MPEG_VIDC_VIDEO_RATE_CONTROL_OFF) {
         DEBUG_PRINT_HIGH("TemporalLayer: Hier layers cannot be enabled when RC is not VBR_CFR");
         return false;
     }
