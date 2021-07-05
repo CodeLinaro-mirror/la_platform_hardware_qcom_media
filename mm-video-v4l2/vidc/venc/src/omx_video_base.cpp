@@ -3983,11 +3983,11 @@ OMX_ERRORTYPE  omx_video::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
 
     int fd = 0;
 
-    DEBUG_PRINT_LOW("ETBProxy: buffer->pBuffer[%p]", buffer->pBuffer);
     if (buffer == NULL) {
         DEBUG_PRINT_ERROR("ERROR: ETBProxy: Invalid buffer[%p]", buffer);
         return OMX_ErrorBadParameter;
     }
+    DEBUG_PRINT_LOW("ETBProxy: buffer->pBuffer[%p]", buffer->pBuffer);
 
     if (profile_etb()) {
         m_pCallbacks.EmptyBufferDone(hComp,m_app_data,buffer);
@@ -4133,7 +4133,7 @@ OMX_ERRORTYPE  omx_video::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
 
         auto_lock l(m_buf_lock);
         pmem_data_buf = (OMX_U8 *)m_pInput_pmem[nBufIndex].buffer;
-        if (pmem_data_buf && BITMASK_PRESENT(&m_client_in_bm_count, nBufIndex)) {
+        if (pmem_data_buf && BITMASK_PRESENT(&m_client_in_bm_count, nBufIndex) && buffer->nFilledLen > 0) {
             memcpy (pmem_data_buf, (buffer->pBuffer + buffer->nOffset),
                     buffer->nFilledLen);
         }
