@@ -221,6 +221,48 @@ bool C2DColorConverter::setResolution(size_t srcWidth, size_t srcHeight,
     return retval == 0? true:false;
 }
 
+int C2DColorConverter::SetBlend(int x, int y, size_t srcWidth, size_t srcHeight, size_t dstWidth, size_t dstHeight, ColorConvertFormat srcFormat, ColorConvertFormat dstFormat)
+{
+
+    int32_t retval = -1;
+    if (enabled) {
+        pthread_mutex_lock(&mLock);
+        ClearSurfaces();
+
+        mSrcWidth = srcWidth;
+        mSrcHeight = srcHeight;
+        mSrcStride = 0;
+        mFlags = 0;
+        mDstWidth = dstWidth;
+        mDstHeight = dstHeight;
+        mSrcFormat = srcFormat;
+        mDstFormat = dstFormat;
+        mSrcSize = calcSize(srcFormat, srcWidth, srcHeight);
+        mDstSize = calcSize(dstFormat, dstWidth, dstHeight);
+        mSrcYSize = calcYSize(srcFormat, srcWidth, srcHeight);
+        mDstYSize = calcYSize(dstFormat, dstWidth, dstHeight);
+
+        retval = getDummySurfaceDef(srcFormat, srcWidth, srcHeight, true);
+        retval |= getDummySurfaceDef(dstFormat, dstWidth, dstHeight, false);
+
+        if (retval == 0) {
+            mBlit.source_rect.x = 0 << 16;
+            mBlit.source_rect.y = 0 << 16;
+            mBlit.source_rect.width = srcWidth << 16;
+            mBlit.source_rect.height = srcHeight << 16;
+            mBlit.target_rect.x = x << 16;
+            mBlit.target_rect.y = y << 16;
+            mBlit.target_rect.width = mSrcWidth << 16;
+            mBlit.target_rect.height = mSrcHeight << 16;
+            mBlit.config_mask = C2D_TARGET_RECT_BIT | C2D_ALPHA_BLEND_SRC_OVER;
+            mBlit.surface_id = mSrcSurface;
+        }
+        ALOGI("C2D library: target rect x = %d, y = %d, width = %zu, height = %zu, retval = %d", x, y, mSrcWidth, mSrcHeight, retval);
+        pthread_mutex_unlock(&mLock);
+    }
+    return retval;
+}
+
 void C2DColorConverter::setRotation(int32_t rotation) {
     // C2D does rotation in anticlock wise, where as VPE rotates in clockwise
     // Hence swapping the 90 and 270 angles to rotate in clockwise
