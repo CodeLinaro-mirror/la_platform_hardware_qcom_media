@@ -224,6 +224,7 @@ class C2DColorConverter{
   int SourceCrop(int x, int y, size_t srcWidth, size_t srcHeight);
   int SetSourceConfigFlags(int flags);
   int SetBlend(int x, int y, size_t srcWidth, size_t srcHeight, size_t dstWidth, size_t dstHeight, ColorConvertFormat srcFormat, ColorConvertFormat dstFormat);
+  int ChangeQualityFlags(int qualityFactor);//0: no quality enhancement, 1: bilinear, 2: anti-aliasing, 3: bilinear + anti-aliasing
 };
 
 #endif  // C2D_ColorConverter_H_
