@@ -1,4 +1,4 @@
-/* Copyright (c) 2012 - 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012 - 2018,2021, The Linux Foundation. All rights reserved.
  *
  * redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -52,14 +52,14 @@ C2DColorConverter::C2DColorConverter()
 
     pthread_mutex_init(&mLock, NULL);
 
-    mC2DLibHandle = dlopen("libC2D2.so", RTLD_NOW);
+    mC2DLibHandle = dlopen("libC2D2.so", RTLD_NOW | RTLD_NODELETE);
     if (!mC2DLibHandle) {
         ALOGE("%s: ERROR: could not dlopen libc2d2.so: %s. C2D is disabled.",
                                                     __FUNCTION__, dlerror());
         enabled = false;
         return;
     }
-    mAdrenoUtilsHandle = dlopen("libadreno_utils.so", RTLD_NOW);
+    mAdrenoUtilsHandle = dlopen("libadreno_utils.so", RTLD_NOW | RTLD_NODELETE);
     if (!mAdrenoUtilsHandle) {
         ALOGE("%s: ERROR: could not dlopen libadreno_utils.so: %s.. C2D is disabled.",
                                                     __FUNCTION__, dlerror());
