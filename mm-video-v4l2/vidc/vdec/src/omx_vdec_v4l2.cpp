@@ -3038,7 +3038,8 @@ OMX_ERRORTYPE omx_vdec::get_supported_profile_level(OMX_VIDEO_PARAM_PROFILELEVEL
     }
     if (m_disable_hdr & DEC_HDR_DISABLE_FLAG) {
         if (output_capability == V4L2_PIX_FMT_VP9) {
-            if (profileLevelType->eProfile == OMX_VIDEO_VP9Profile2HDR || profileLevelType->eProfile == OMX_VIDEO_VP9Profile2HDR10Plus)
+            if (profileLevelType->eProfile == OMX_VIDEO_VP9Profile2HDR || profileLevelType->eProfile == OMX_VIDEO_VP9Profile2HDR10Plus
+                || profileLevelType->eProfile == OMX_VIDEO_VP9Profile2)
                 hdr_supported = false;
         }
         if (output_capability == V4L2_PIX_FMT_HEVC) {
@@ -6231,7 +6232,7 @@ OMX_ERRORTYPE omx_vdec::fill_buffer_done(OMX_HANDLETYPE hComp,
         il_buffer = client_buffers.get_il_buf_hdr(buffer);
         OMX_U32 current_framerate = (int)(drv_ctx.frame_rate.fps_numerator / drv_ctx.frame_rate.fps_denominator);
 
-        if (il_buffer && m_dec_hfr_fps > 0 && buffer->nFilledLen > 0) {
+        if (il_buffer && il_buffer->nTimeStamp >= 0 && m_dec_hfr_fps > 0 && buffer->nFilledLen > 0) {
             uint64_t tsDeltaUs = llabs(il_buffer->nTimeStamp - m_prev_timestampUs);
             double vsyncUs = 1e6/m_dec_hfr_fps;
             double vsync_start = (static_cast<uint64_t>(il_buffer->nTimeStamp/vsyncUs)) * vsyncUs;
