@@ -221,6 +221,48 @@ bool C2DColorConverter::setResolution(size_t srcWidth, size_t srcHeight,
     return retval == 0? true:false;
 }
 
+int C2DColorConverter::SetBlend(int x, int y, size_t srcWidth, size_t srcHeight, size_t dstWidth, size_t dstHeight, ColorConvertFormat srcFormat, ColorConvertFormat dstFormat)
+{
+
+    int32_t retval = -1;
+    if (enabled) {
+        pthread_mutex_lock(&mLock);
+        ClearSurfaces();
+
+        mSrcWidth = srcWidth;
+        mSrcHeight = srcHeight;
+        mSrcStride = 0;
+        mFlags = 0;
+        mDstWidth = dstWidth;
+        mDstHeight = dstHeight;
+        mSrcFormat = srcFormat;
+        mDstFormat = dstFormat;
+        mSrcSize = calcSize(srcFormat, srcWidth, srcHeight);
+        mDstSize = calcSize(dstFormat, dstWidth, dstHeight);
+        mSrcYSize = calcYSize(srcFormat, srcWidth, srcHeight);
+        mDstYSize = calcYSize(dstFormat, dstWidth, dstHeight);
+
+        retval = getDummySurfaceDef(srcFormat, srcWidth, srcHeight, true);
+        retval |= getDummySurfaceDef(dstFormat, dstWidth, dstHeight, false);
+
+        if (retval == 0) {
+            mBlit.source_rect.x = 0 << 16;
+            mBlit.source_rect.y = 0 << 16;
+            mBlit.source_rect.width = srcWidth << 16;
+            mBlit.source_rect.height = srcHeight << 16;
+            mBlit.target_rect.x = x << 16;
+            mBlit.target_rect.y = y << 16;
+            mBlit.target_rect.width = mSrcWidth << 16;
+            mBlit.target_rect.height = mSrcHeight << 16;
+            mBlit.config_mask = C2D_TARGET_RECT_BIT | C2D_ALPHA_BLEND_SRC_OVER;
+            mBlit.surface_id = mSrcSurface;
+        }
+        ALOGI("C2D library: target rect x = %d, y = %d, width = %zu, height = %zu, retval = %d", x, y, mSrcWidth, mSrcHeight, retval);
+        pthread_mutex_unlock(&mLock);
+    }
+    return retval;
+}
+
 void C2DColorConverter::setRotation(int32_t rotation) {
     // C2D does rotation in anticlock wise, where as VPE rotates in clockwise
     // Hence swapping the 90 and 270 angles to rotate in clockwise
@@ -578,6 +620,8 @@ uint32_t C2DColorConverter::getC2DFormat(ColorConvertFormat format, bool isSourc
             return C2D_COLOR_FORMAT_420_P010;
         case CbYCrY:
             return C2D_COLOR_FORMAT_422_UYVY;
+        case BGR888:
+            return C2D_COLOR_FORMAT_888_RGB;
         default:
             ALOGW("%s: Format not supported , %d", __FUNCTION__, format);
             return -1;
@@ -618,6 +662,8 @@ size_t C2DColorConverter::calcStride(ColorConvertFormat format, size_t width)
             return ALIGN(width*2, ALIGN256);
         case CbYCrY:
             return ALIGN(width*2, ALIGN64);
+        case BGR888:
+            return  ALIGN(width, ALIGN32) * 3;
         default:
             ALOGW("%s: Format not supported , %d", __FUNCTION__, format);
             return 0;
@@ -683,7 +729,7 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
                                                    1, tile_mode, raster_mode,
                                                    padding_threshold,
                                                    &alignedw, &alignedh);
-            ALOGV("%s: alignedw %d alignedh %d", __FUNCTION__,alignedw, alignedh);
+            ALOGV("%s: alignedw %d alignedh %d", __FUNCTION__, alignedw, alignedh);
             size = alignedw * alignedh * bpp;
             size = ALIGN(size, ALIGN4K);
             break;
@@ -694,7 +740,7 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
                                                    1, tile_mode, raster_mode,
                                                    padding_threshold,
                                                    &alignedw, &alignedh);
-            ALOGV("%s: alignedw %d alignedh %d", __FUNCTION__,alignedw, alignedh);
+            ALOGV("%s: alignedw %d alignedh %d", __FUNCTION__, alignedw, alignedh);
             if (mSrcStride)
               size = mSrcStride *  alignedh * bpp;
             else
@@ -754,6 +800,17 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
             break;
         case CbYCrY:
             size = ALIGN(ALIGN(width * 2, ALIGN64) * height, ALIGN4K);
+            break;
+        case BGR888:
+            bpp = 3;
+            mAdrenoComputeFmtAlignedWidthAndHeight(width, height,
+                                                   0, ADRENO_PIXELFORMAT_R8G8B8,
+                                                   1, tile_mode, raster_mode,
+                                                   padding_threshold,
+                                                   &alignedw, &alignedh);
+            ALOGV("%s: bgr888 alignedw %d alignedh %d", __FUNCTION__, alignedw, alignedh);
+            size = alignedw * alignedh * bpp;
+            size = ALIGN(size, ALIGN4K);
             break;
         default:
             ALOGW("%s: Format not supported , %d", __FUNCTION__, format);
@@ -914,6 +971,9 @@ C2DBytesPerPixel C2DColorConverter::calcBytesPerPixel(ColorConvertFormat format)
             bpp.numerator = 3;
             bpp.denominator = 2;
             break;
+        case BGR888:
+            bpp.numerator = 3;
+            break;
         default:
             ALOGW("%s: unknown format (%d) passed.", __FUNCTION__, format);
             break;
@@ -998,6 +1058,8 @@ int32_t C2DColorConverter::dumpOutput(char * filename, char mode) {
         bpp = 2;
       } else if (mDstFormat == RGBA8888  || mDstFormat == RGBA8888_UBWC) {
         bpp = 4;
+      } else if (mDstFormat == BGR888) {
+         bpp = 3;
       }
 
       int count = 0;
