@@ -2,7 +2,7 @@
 #==============================================================================
 #       init.qti.media.sh
 #
-# Copyright (c) 2020, The Linux Foundation. All rights reserved.
+# Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -52,6 +52,13 @@ case "$target" in
                if [ $sku_ver -eq 1 ]; then
                    setprop vendor.media.target.version 1
                fi
+               ;;
+       esac
+       ;;
+   "kona")
+       case "$soc_hwid" in
+           481)
+               setprop vendor.media.target.version 1
                ;;
        esac
        ;;
