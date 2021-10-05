@@ -3,6 +3,10 @@ ifneq ($(BUILD_TINY_ANDROID),true)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+ifeq ($(QCOM_MEDIA_ROOT),)
+    QCOM_MEDIA_ROOT := hardware/qcom/media
+endif
+
 OMXCORE_CFLAGS := -g -O3 -DVERBOSE
 OMXCORE_CFLAGS += -O0 -fno-inline -fno-short-enums
 OMXCORE_CFLAGS += -D_ANDROID_
@@ -66,7 +70,7 @@ LOCAL_COPY_HEADERS      += inc/QCMetaData.h
 #===============================================================================
 
 LOCAL_C_INCLUDES        := $(LOCAL_PATH)/src/common
-LOCAL_C_INCLUDES        += $(TOP)/hardware/qcom/media/libplatformconfig
+LOCAL_C_INCLUDES        += $(TOP)/$(QCOM_MEDIA_ROOT)/libplatformconfig
 
 LOCAL_HEADER_LIBRARIES := \
         libutils_headers \
@@ -107,7 +111,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES        := $(LOCAL_PATH)/src/common
-LOCAL_C_INCLUDES        += $(TOP)/hardware/qcom/media/libplatformconfig
+LOCAL_C_INCLUDES        += $(TOP)/$(QCOM_MEDIA_ROOT)/libplatformconfig
 
 LOCAL_HEADER_LIBRARIES := \
         libutils_headers \
