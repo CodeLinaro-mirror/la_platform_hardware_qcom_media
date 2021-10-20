@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2009, The Linux Foundation. All rights reserved.
+Copyright (c) 2009, 2021 The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -39,19 +39,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 omx_core_cb_type core[] =
 {
-  {
-    "OMX.qcom.xxx.yyy.zzz",
-    NULL, // Create instance function
-    // Unique instance handle
-    {
-      NULL
-    },
-    NULL,   // Shared object library handle
-    "abc.so",
-    {
-      "efg.ijk"
-    }
-  }
+  /* Android 11 onwards OMX codec components aren't used
+  ** hence, for all Gen3 platforms default registry file
+  ** is being used. In this case, VTS tries to allocate
+  ** the nodes listed in the default registry file which
+  ** happens to be dummy node. Due to which VTS tests fail.
+  ** Hence, remove the dummy node.
+  */
 };
 
 const unsigned int SIZE_OF_CORE = sizeof(core) / sizeof(omx_core_cb_type);
