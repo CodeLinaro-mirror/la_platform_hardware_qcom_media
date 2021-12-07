@@ -39,19 +39,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 omx_core_cb_type core[] =
 {
-  {
-    "OMX.qcom.xxx.yyy.zzz",
-    NULL, // Create instance function
-    // Unique instance handle
-    {
-      NULL
-    },
-    NULL,   // Shared object library handle
-    "abc.so",
-    {
-      "efg.ijk"
-    }
-  }
+  /* OMX video codec components aren't suppotred.
+     VTS tries to allocate the nodes listed in the default registry file
+     (dummy node). Due to which VTS tests fail.
+  */
 };
 
 const unsigned int SIZE_OF_CORE = sizeof(core) / sizeof(omx_core_cb_type);
