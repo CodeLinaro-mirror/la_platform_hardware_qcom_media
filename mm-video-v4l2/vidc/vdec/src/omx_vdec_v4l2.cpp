@@ -13857,8 +13857,7 @@ OMX_ERRORTYPE omx_vdec::enable_adaptive_playback(unsigned long nMaxFrameWidth,
      DEBUG_PRINT_LOW("enable adaptive - upper limit buffer size = %u",
                      (unsigned int)drv_ctx.op_buf.buffer_size);
 
-     drv_ctx.op_buf.mincount = min_res_buf_count;
-     drv_ctx.op_buf.actualcount = min_res_buf_count;
+     drv_ctx.op_buf.mincount = drv_ctx.op_buf.actualcount = 6;
      drv_ctx.op_buf.buffer_size = drv_ctx.op_buf.buffer_size;
      eRet = set_buffer_req(&drv_ctx.op_buf);
      if (eRet != OMX_ErrorNone) {
