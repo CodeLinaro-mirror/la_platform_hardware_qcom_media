@@ -12662,11 +12662,11 @@ bool omx_vdec::prefetch_buffers(unsigned long prefetch_count,
     }
 
     regions.nr_sizes = prefetch_count;
-    regions.sizes = sizes;
+    regions.sizes = (__u64)sizes;
     regions.vmid = ion_flag;
 
     prefetch_data.nr_regions = 1;
-    prefetch_data.regions = &regions;
+    prefetch_data.regions = (__u64)&regions;
     prefetch_data.heap_id = ION_HEAP(ION_SECURE_HEAP_ID);
 
     rc = ioctl(ion_fd, ioctl_code, &prefetch_data);

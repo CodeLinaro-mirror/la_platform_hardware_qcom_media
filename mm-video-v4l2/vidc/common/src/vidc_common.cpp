@@ -36,6 +36,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OMX_VideoExt.h"
 #include "OMX_IndexExt.h"
 #include <linux/videodev2.h>
+#include <media/msm_vidc_utils.h>
 
 int debug_level = PRIO_ERROR;
 

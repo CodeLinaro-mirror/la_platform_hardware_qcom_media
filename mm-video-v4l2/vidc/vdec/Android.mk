@@ -68,6 +68,7 @@ libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/SwVdec
 libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/swvdec
 libmm-vdec-inc      	+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-vdec-inc      	+= $(TOP)/hardware/qcom/media/libarbitrarybytes/inc
+libmm-vdec-inc      	+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/vidc
 
 # TODO: Check if we need to change the path for dispaly header files
 libmm-vdec-inc      	+= $(TOP)/vendor/qcom/opensource/commonsys-intf/display/gralloc

@@ -26,6 +26,7 @@ libmm-vidc-inc      += $(TOP)/hardware/qcom/media/libc2dcolorconvert
 libmm-vidc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-vidc-inc      += $(TOP)/hardware/libhardware/include
 libmm-vidc-inc      += $(LIBION_HEADER_PATHS)
+libmm-vidc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/vidc
 
 # KONA_TODO_UPDATE: Check if we need to change the path for dispaly header files
 libmm-vidc-inc      += $(TOP)/vendor/qcom/opensource/commonsys-intf/display/gralloc

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+Copyright (c) 2017-2019, 2022 The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -326,41 +326,17 @@ OMX_ERRORTYPE omx_video::get_vendor_extension_config(
         }
         case OMX_QTIIndexParamCapabilitiesRotationSupport:
         {
-            struct v4l2_queryctrl query_ctrl;
-            memset(&query_ctrl, 0, sizeof(struct v4l2_queryctrl));
-            query_ctrl.id = V4L2_CID_MPEG_VIDC_VIDEO_ROTATION_CAPS;
-            if (dev_query_cap(query_ctrl) && (query_ctrl.maximum > 0)) {
-                setStatus &= vExt.setParamInt32(ext, "rotation",OMX_TRUE);
-            }
-            else {
-                setStatus &= vExt.setParamInt32(ext, "rotation",OMX_FALSE);
-            }
+            setStatus &= vExt.setParamInt32(ext, "rotation", OMX_TRUE);
             break;
         }
         case OMX_QTIIndexParamCapabilitiesBlurSupport:
         {
-            struct v4l2_queryctrl query_ctrl;
-            memset(&query_ctrl, 0, sizeof(struct v4l2_queryctrl));
-            query_ctrl.id = V4L2_CID_MPEG_VIDC_VIDEO_BLUR_WIDTH;
-            if (dev_query_cap(query_ctrl) && (query_ctrl.maximum > 0)) {
-                setStatus &= vExt.setParamInt32(ext, "blur-support",OMX_TRUE);
-            }
-            else {
-                setStatus &= vExt.setParamInt32(ext, "blur-support",OMX_FALSE);
-            }
+            setStatus &= vExt.setParamInt32(ext, "blur-support",OMX_FALSE);
             break;
         }
         case OMX_QTIIndexParamCapabilitiesColorSpaceConversionSupport:
         {
-            struct v4l2_queryctrl query_ctrl;
-            memset(&query_ctrl, 0, sizeof(struct v4l2_queryctrl));
-            query_ctrl.id = V4L2_CID_MPEG_VIDC_VIDEO_COLOR_SPACE_CAPS;
-            if (dev_query_cap(query_ctrl) && (query_ctrl.maximum > 0)) {
-                setStatus &= vExt.setParamInt32(ext, "color-conversion-support",OMX_TRUE);
-            }
-            else {
-                setStatus &= vExt.setParamInt32(ext, "color-conversion-support",OMX_FALSE);
-            }
+            setStatus &= vExt.setParamInt32(ext, "color-conversion-support",OMX_FALSE);
             break;
         }
         case OMX_QTIIndexParamCapabilitiesMaxTemporalLayers:

@@ -11,6 +11,7 @@ libarbitrarybytes-inc  := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libarbitrarybytes-inc  += $(LOCAL_PATH)/inc
 libarbitrarybytes-inc  += $(LOCAL_PATH)/../mm-video-v4l2/vidc/common/inc/
 libarbitrarybytes-inc  += $(LOCAL_PATH)/../mm-core/inc
+libarbitrarybytes-inc  += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/vidc
 
 LOCAL_MODULE           := libarbitrarybytes
 
