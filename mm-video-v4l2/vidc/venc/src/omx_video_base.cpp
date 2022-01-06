@@ -5067,7 +5067,7 @@ OMX_U32 omx_video::get_gbm_color_format(OMX_COLOR_FORMATTYPE eColorFormat)
         format = GBM_FORMAT_YCbCr_420_TP10_UBWC;
         break;
     case QOMX_COLOR_FORMATYUV420SemiPlanarP010Venus:
-        format = GBM_FORMAT_YCbCr_420_P010_UBWC;
+        format = GBM_FORMAT_YCbCr_420_P010_VENUS;
         break;
     default:
         DEBUG_PRINT_INFO("WARN: Unsupported eColorFormat %#x", eColorFormat);

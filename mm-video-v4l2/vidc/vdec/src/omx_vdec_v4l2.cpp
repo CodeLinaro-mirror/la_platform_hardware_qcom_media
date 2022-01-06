@@ -6664,7 +6664,7 @@ OMX_U32 omx_vdec::get_gbm_color_format(vdec_output_format eColorFormat)
         format = GBM_FORMAT_YCbCr_420_TP10_UBWC;
         break;
     case VDEC_YUV_FORMAT_P010_VENUS:
-        format = GBM_FORMAT_YCbCr_420_P010_UBWC;
+        format = GBM_FORMAT_YCbCr_420_P010_VENUS;
         break;
     default:
         DEBUG_PRINT_INFO("WARN: Unsupported eColorFormat %#x", eColorFormat);
