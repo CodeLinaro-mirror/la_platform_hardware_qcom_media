@@ -59,6 +59,7 @@ omx_core_cb_type core[] =
     OMX_REGISTRY_ENTRY("OMX.qcom.video.encoder.heic", "libOmxVenc.so", "image_encoder.heic"),
 #endif // VIDC_STUB_HAL
 
+#ifdef __LINUX__
     //------------- Audio HW components -----------------------------------------------------------
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.decoder.Qcelp13", "libOmxQcelp13Dec.so", "audio_decoder.Qcelp13"),
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.decoder.evrc", "libOmxEvrcDec.so", "audio_decoder.evrc"),
@@ -76,8 +77,9 @@ omx_core_cb_type core[] =
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.encoder.evrc", "libOmxEvrcEnc.so", "audio_encoder.evrc"),
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.encoder.amrnb", "libOmxAmrEnc.so", "audio_encoder.amrnb"),
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.decoder.multiaac", "libOmxAacDec.so", "audio_decoder.aac"),
+#endif
 
-#ifdef AUDIO_MPEGH_ENABLED
+#if defined AUDIO_MPEGH_ENABLED && defined __LINUX__
     //Entries specific to AUDIO_MPEGH_CODEC
     OMX_REGISTRY_ENTRY("OMX.qti.audio.decoder.mpegh", "libOmxMpeghDecSw.so", "audio_decoder.mpegh"),
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.encoder.mpegh", "libOmxMpeghEncSw.so", "audio_encoder.mpegh"),
@@ -101,7 +103,10 @@ omx_core_cb_type core[] =
 
     // Hidden components
     OMX_REGISTRY_ENTRY("OMX.qcom.file.muxer", "libOmxMux.so", "container_muxer.mp2"),
+
+#ifdef __LINUX__
     OMX_REGISTRY_ENTRY("OMX.qcom.audio.decoder.aac", "libOmxAacDec.so", "audio_decoder.aac"),
+#endif
 
 };
 const unsigned int SIZE_OF_CORE = sizeof(core) / sizeof(omx_core_cb_type);
