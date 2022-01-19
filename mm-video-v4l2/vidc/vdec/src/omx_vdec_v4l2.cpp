@@ -6748,7 +6748,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
        bo = gbm_bo_create(gbm, w, h,GBM_FORMAT_NV12,
               flags);
     } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_P010_VENUS) {
-       bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_YCbCr_420_P010_VENUS,
+       bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_P010,
               flags);
     }
     if (bo == NULL) {
