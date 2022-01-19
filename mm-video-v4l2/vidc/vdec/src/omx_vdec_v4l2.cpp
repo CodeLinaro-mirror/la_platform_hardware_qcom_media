@@ -10616,15 +10616,23 @@ void omx_vdec::free_output_buffer_header()
         free (drv_ctx.ptr_outputbuffer);
         drv_ctx.ptr_outputbuffer = NULL;
     }
-#ifdef USE_ION
+#ifdef USE_GBM
+    if (drv_ctx.op_buf_gbm_info) {
+        DEBUG_PRINT_LOW("Free o/p gbm context");
+        free(drv_ctx.op_buf_gbm_info);
+        drv_ctx.op_buf_gbm_info = NULL;
+    }
+#elif defined USE_ION
     if (drv_ctx.op_buf_ion_info) {
         DEBUG_PRINT_LOW("Free o/p ion context");
         free(drv_ctx.op_buf_ion_info);
         drv_ctx.op_buf_ion_info = NULL;
     }
 #endif
-    free(drv_ctx.op_buf_map_info);
-    drv_ctx.op_buf_map_info = NULL;
+    if (drv_ctx.op_buf_map_info) {
+      free(drv_ctx.op_buf_map_info);
+      drv_ctx.op_buf_map_info = NULL;
+    }
 }
 
 void omx_vdec::free_input_buffer_header()
