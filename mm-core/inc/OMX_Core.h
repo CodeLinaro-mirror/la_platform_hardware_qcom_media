@@ -534,6 +534,7 @@ typedef enum OMX_EVENTTYPE
      *  fool-proof way to do that for video encoders.
      */
     OMX_EventDataSpaceChanged,
+    OMX_EventConfigUpdate,
     OMX_EventMax = 0x7FFFFFFF
 } OMX_EVENTTYPE;
 
