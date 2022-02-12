@@ -926,6 +926,10 @@ OMX_ERRORTYPE  omx_venc::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                 memcpy(&avc_param, pParam, sizeof( struct OMX_VIDEO_PARAM_AVCTYPE));
                 DEBUG_PRINT_LOW("set_parameter: OMX_IndexParamVideoAvc");
 
+                avc_param.nBFrames = 0;
+                avc_param.bEntropyCodingCABAC = (OMX_BOOL)(0);
+                avc_param.nCabacInitIdc = 0;
+
                 if (handle->venc_set_param(&avc_param,OMX_IndexParamVideoAvc) != true) {
                     return OMX_ErrorUnsupportedSetting;
                 }
