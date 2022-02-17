@@ -15,8 +15,10 @@ AM_CPPFLAGS += -D_ENABLE_QC_MSG_LOG_
 #AM_CPPFLAGS += -O0 -fno-inline -fno-short-enums
 AM_CPPFLAGS += -I$(top_srcdir)/mm-core/inc/
 AM_CPPFLAGS += -I$(top_srcdir)/mm-core/src/common/
+AM_CPPFLAGS += -I$(top_srcdir)/libplatformconfig/
 AM_CPPFLAGS += "-Dstrlcpy=g_strlcpy"
 AM_CPPFLAGS += "-Dstrlcat=g_strlcat"
+AM_CPPFLAGS += -include stdbool.h
 
 h_sources  =inc/OMX_Audio.h
 h_sources +=inc/OMX_Component.h
@@ -65,7 +67,8 @@ include_HEADERS = $(h_sources)
 libOmxCore_la_SOURCES = $(c_sources)
 libOmxCore_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxCore_la_CPPFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
-libOmxCore_la_LDFLAGS = -ldl -lrt -lpthread -lglib-2.0 -lcutils
+libOmxCore_la_LDFLAGS  = -L$(top_builddir)/libplatformconfig
+libOmxCore_la_LDFLAGS += -ldl -lrt -lpthread -lglib-2.0 -lcutils -lplatformconfig
 libOmxCore_la_LDFLAGS += -shared -avoid-version
 
 
@@ -78,6 +81,7 @@ c1_sources +=src/registry_table.c
 libmm_omxcore_la_SOURCES = $(c1_sources)
 libmm_omxcore_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libmm_omxcore_la_CPPFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
-libmm_omxcore_la_LDFLAGS = -ldl -lrt -lpthread -lglib-2.0 -lcutils
+libmm_omxcore_la_LDFLAGS  = -L$(top_builddir)/libplatformconfig
+libmm_omxcore_la_LDFLAGS += -ldl -lrt -lpthread -lglib-2.0 -lcutils -lplatformconfig
 libmm_omxcore_la_LDFLAGS += -shared -avoid-version
 
