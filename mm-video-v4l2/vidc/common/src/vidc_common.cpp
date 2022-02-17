@@ -347,6 +347,9 @@ void get_video_format_as_string(char * buf, int buf_len, int format) {
         case GBM_FORMAT_P010:
             snprintf(buf, buf_len, "GBM_FORMAT_P010");
             break;
+        case GBM_FORMAT_YCbCr_420_P010_VENUS:
+            snprintf(buf, buf_len, "GBM_FORMAT_YCbCr_420_P010_VENUS");
+            break;
 #else
         case HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC:
             snprintf(buf, buf_len, "HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC");

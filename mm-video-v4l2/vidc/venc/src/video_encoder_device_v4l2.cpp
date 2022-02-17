@@ -2741,7 +2741,8 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                             DEBUG_PRINT_INFO("ENC_CONFIG: Input Color = NV12 Linear");
 #ifdef USE_GBM
                         } else if (handle->format == GBM_FORMAT_YCbCr_420_TP10_UBWC ||
-                                   handle->format == GBM_FORMAT_P010) {
+                                   handle->format == GBM_FORMAT_P010 ||
+                                   handle->format == GBM_FORMAT_YCbCr_420_P010_VENUS) {
 #else
                         } else if (handle->format == HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC ||
                                    handle->format == HAL_PIXEL_FORMAT_YCbCr_420_P010_VENUS) {
