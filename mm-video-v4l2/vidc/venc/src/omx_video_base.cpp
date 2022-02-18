@@ -5147,10 +5147,12 @@ void omx_video::omx_release_meta_buffer(OMX_BUFFERHEADERTYPE *buffer)
 bool is_ubwc_interlaced(private_handle_t *handle) {
     int interlace_flag = 0;
 
+#ifdef QCS610_TODO_UPDATE
     if (getMetaData(const_cast<private_handle_t *>(handle),
                   GET_PP_PARAM_INTERLACED, &interlace_flag)) {
         interlace_flag = 0;
     }
+#endif
     return (handle->format == HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS_UBWC) &&
                 !!interlace_flag;
 }

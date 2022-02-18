@@ -3499,8 +3499,10 @@ OMX_ERRORTYPE  omx_vdec::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                                     // Also use default format-list if FLEXIBLE YUV is supported,
                                     // as the client negotiates the standard color-format if it needs to
                                     bool useNonSurfaceMode = false;
+#ifdef QCS610_TODO_UPDATE
 #if defined(_ANDROID_) && !defined(FLEXYUV_SUPPORTED) && !defined(USE_GBM)
                                     useNonSurfaceMode = (m_enable_android_native_buffers == OMX_FALSE);
+#endif
 #endif
                                     portFmt->eColorFormat = useNonSurfaceMode ?
                                         getPreferredColorFormatNonSurfaceMode(portFmt->nIndex) :
@@ -8265,16 +8267,20 @@ OMX_ERRORTYPE omx_vdec::fill_buffer_done(OMX_HANDLETYPE hComp,
             }
             DEBUG_PRINT_LOW("frc set refresh_rate %f, frame %d", refresh_rate, proc_frms);
             OMX_U32 buf_index = buffer - omx_base_address;
+#ifdef QCS610_TODO_UPDATE
             setMetaData((private_handle_t *)native_buffer[buf_index].privatehandle,
                          UPDATE_REFRESH_RATE, (void*)&refresh_rate);
+#endif
             m_fps_prev = refresh_rate;
         }
 
         if (buffer->nFilledLen && m_enable_android_native_buffers && omx_base_address) {
             OMX_U32 buf_index = buffer - omx_base_address;
             DEBUG_PRINT_LOW("stereo_output_mode = %d",stereo_output_mode);
+#ifdef QCS610_TODO_UPDATE
             setMetaData((private_handle_t *)native_buffer[buf_index].privatehandle,
                                S3D_FORMAT, (void*)&stereo_output_mode);
+#endif
         }
 
         if (il_buffer) {
@@ -8327,7 +8333,9 @@ OMX_ERRORTYPE omx_vdec::fill_buffer_done(OMX_HANDLETYPE hComp,
         if (private_handle) {
             DEBUG_PRINT_LOW("set metadata: update buf-geometry with stride %d slice %d",
                 dim.sliceWidth, dim.sliceHeight);
+#ifdef QCS610_TODO_UPDATE
             setMetaData(private_handle, UPDATE_BUFFER_GEOMETRY, (void*)&dim);
+#endif
         }
     }
 #endif
@@ -10674,9 +10682,11 @@ void omx_vdec::set_colormetadata_in_handle(ColorMetaData *color_mdata, unsigned 
         native_buffer[buf_index].privatehandle) {
         private_handle = native_buffer[buf_index].privatehandle;
     }
+#ifdef QCS610_TODO_UPDATE
     if (private_handle) {
         setMetaData(private_handle, COLOR_METADATA, (void*)color_mdata);
     }
+#endif
 }
 
 void omx_vdec::convert_color_aspects_to_metadata(ColorAspects& aspects, ColorMetaData &color_mdata)
@@ -10860,6 +10870,7 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
         p_client_extra = (OMX_OTHER_EXTRADATATYPE *)((m_client_output_extradata_mem_ptr + buf_index)->pBuffer);
     }
 
+    buf_index = 0;
     p_extradata = drv_ctx.extradata_info.uaddr + buf_index * drv_ctx.extradata_info.buffer_size;
 
     m_extradata_info.output_crop_updated = OMX_FALSE;
@@ -10908,8 +10919,10 @@ bool omx_vdec::handle_extradata(OMX_BUFFERHEADERTYPE *p_buf_hdr)
                         DEBUG_PRINT_LOW("setMetaData INTERLACED format:%d enable:%d",
                                         payload->format, enable);
 
+#ifdef QCS610_TODO_UPDATE
                         setMetaData((private_handle_t *)native_buffer[buf_index].privatehandle,
                                PP_PARAM_INTERLACED, (void*)&enable);
+#endif
 
                     }
                     if (client_extradata & OMX_INTERLACE_EXTRADATA) {
