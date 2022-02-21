@@ -1266,6 +1266,8 @@ class omx_vdec: public qc_omx_component
                     [3] = OMX_COLOR_FormatYUV420Planar,
                     [4] = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mMultiView,
                     [5] = OMX_COLOR_Format16bitRGB565,
+                    [6] = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m10bitCompressed,
+                    [7] = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420SemiPlanarP010Venus,
                 };
                 format = (index < sizeof(formatsDefault) / sizeof(OMX_COLOR_FORMATTYPE)) ?
                     formatsDefault[index] : OMX_COLOR_FormatMax;
@@ -1275,6 +1277,7 @@ class omx_vdec: public qc_omx_component
                     [1] = OMX_COLOR_FormatYUV420SemiPlanar,
                     [2] = OMX_COLOR_FormatYUV420Planar,
                     [3] = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mMultiView,
+                    [4] = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420SemiPlanarP010Venus,
                 };
                 format = (index < sizeof(formatsDefault) / sizeof(OMX_COLOR_FORMATTYPE)) ?
                     formatsDefault[index] : OMX_COLOR_FormatMax;

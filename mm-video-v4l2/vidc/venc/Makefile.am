@@ -68,6 +68,10 @@ if TARGETS_THAT_SUPPORT_UBWC
 AM_CPPFLAGS += -D_UBWC_
 endif
 
+if TARGET_USES_DLT
+AM_CPPFLAGS += -DGENIVI_DLT
+endif
+
 AM_CPPFLAGS += -I$(top_srcdir)/mm-video-v4l2/vidc/common/inc/
 AM_CPPFLAGS += -I$(top_srcdir)/mm-video-v4l2/vidc/venc/inc/
 AM_CPPFLAGS += -I$(top_srcdir)/libc2dcolorconvert/
