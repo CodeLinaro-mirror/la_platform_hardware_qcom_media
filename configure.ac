@@ -117,6 +117,11 @@ AC_ARG_ENABLE([target-hypervisor],
 	[target_hypervisor="${enableval}"],
 	target_hypervisor=no)
 
+AC_ARG_ENABLE([target-uses-dlt],
+        AC_HELP_STRING([--enable-target-uses-dlt],
+                [Enable conditional compile for target target-uses-dlt [default=no]]),
+        [target_uses_dlt="${enableval}"])
+
 AM_CONDITIONAL(TARGET_HYPERVISOR, test "x$target_hypervisor" = "xyes")
 
 AC_ARG_WITH([sanitized-headers],
@@ -195,6 +200,7 @@ AM_CONDITIONAL(USE_GLIB, [test "x$use_glib" = "xyes"])
 AM_CONDITIONAL(BUILD_MM_VIDEO, [test "x$build_mm_video" = "xyes"])
 AM_CONDITIONAL(TARGET_OUTPUT_DEINTERLACED, [test "x$target_output_deinterlaced" = "xyes"])
 AM_CONDITIONAL(BUILD_SWCODEC, [test "x$build_swcodec" = "xyes"])
+AM_CONDITIONAL(TARGET_USES_DLT, [test "x$target_uses_dlt" = "xyes"])
 
 AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],

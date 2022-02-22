@@ -24,6 +24,40 @@ OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Changes from Qualcomm Innovation Center are provided under the following license:
+
+Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted (subject to the limitations in the
+disclaimer below) provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+
+    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
 
 #ifndef __VIDC_DEBUG_H__
@@ -35,9 +69,19 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <pthread.h>
 #include <sys/mman.h>
+
 extern "C" {
 #include <utils/Log.h>
 }
+
+#ifdef GENIVI_DLT
+#include "dlt.h"
+
+void omx_vidc_dlt_register(void);
+void omx_vidc_dlt_unregister(void);
+void omx_vidc_dlt_log(DltLogLevelType dlt_level, const char *fmt, ...);
+
+#endif
 
 #include <linux/videodev2.h>
 #include "OMX_Core.h"
@@ -59,8 +103,31 @@ enum {
    PRIO_TRACE_LOW = 0x20,
 };
 
+
 extern int debug_level;
 
+#ifdef GENIVI_DLT
+#undef DEBUG_PRINT_ERROR
+#define DEBUG_PRINT_ERROR(fmt, args...) ({ \
+      if (debug_level & PRIO_ERROR) \
+          omx_vidc_dlt_log(DLT_LOG_ERROR, fmt, ##args); \
+      })
+#undef DEBUG_PRINT_INFO
+#define DEBUG_PRINT_INFO(fmt, args...) ({ \
+      if (debug_level & PRIO_INFO) \
+          omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ##args); \
+      })
+#undef DEBUG_PRINT_LOW
+#define DEBUG_PRINT_LOW(fmt, args...) ({ \
+      if (debug_level & PRIO_LOW) \
+          omx_vidc_dlt_log(DLT_LOG_VERBOSE, fmt, ##args); \
+      })
+#undef DEBUG_PRINT_HIGH
+#define DEBUG_PRINT_HIGH(fmt, args...) ({ \
+      if (debug_level & PRIO_HIGH) \
+          omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ##args); \
+      })
+#else
 #undef DEBUG_PRINT_ERROR
 #define DEBUG_PRINT_ERROR(fmt, args...) ({ \
       if (debug_level & PRIO_ERROR) \
@@ -81,6 +148,7 @@ extern int debug_level;
       if (debug_level & PRIO_HIGH) \
           ALOGD(fmt,##args); \
       })
+#endif
 #else
 #define DEBUG_PRINT_ERROR printf
 #define DEBUG_PRINT_INFO printf

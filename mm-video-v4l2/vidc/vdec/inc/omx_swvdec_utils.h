@@ -27,6 +27,40 @@
  *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  *   DAMAGE.
  *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *
+ *   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  * @file
  *
  *   omx_swvdec_utils.h
@@ -43,6 +77,7 @@
 #include <pthread.h>
 
 #include <utils/Log.h>
+#include <vidc_debug.h>
 
 extern unsigned int g_omx_swvdec_logmask;
                       ///< global OMX SwVdec logmask variable extern declaration
@@ -58,6 +93,42 @@ void omx_swvdec_log_init();
 #endif
 #define LOG_TAG "OMX_SWVDEC" ///< OMX SwVdec log tag
 
+#ifdef GENIVI_DLT
+/// low priority log message
+#define OMX_SWVDEC_LOG_LOW(fmt,...)                              \
+    do {                                                             \
+        if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_LOW)           \
+            omx_vidc_dlt_log(DLT_LOG_VERBOSE, fmt, ## __VA_ARGS__);  \
+    } while (0)
+
+/// high priority log message
+#define OMX_SWVDEC_LOG_HIGH(fmt,...)                            \
+    do {                                                             \
+        if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
+            omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ## __VA_ARGS__);    \
+    } while (0)
+
+/// error priority log message
+#define OMX_SWVDEC_LOG_ERROR(fmt,...)                           \
+    do {                                                             \
+        if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_ERROR)         \
+            omx_vidc_dlt_log(DLT_LOG_ERROR, fmt, ## __VA_ARGS__);    \
+    } while (0)
+
+/// high priority log message for OMX SwVdec API calls
+#define OMX_SWVDEC_LOG_API(fmt,...)                             \
+    do {                                                             \
+        if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
+            omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ## __VA_ARGS__);   \
+    } while (0)
+
+/// high priority log message for OMX SwVdec callbacks
+#define OMX_SWVDEC_LOG_CALLBACK(fmt,...)                        \
+    do {                                                             \
+        if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
+            omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ## __VA_ARGS__);    \
+    } while (0)
+#else
 /// low priority log message
 #define OMX_SWVDEC_LOG_LOW(string, ...)                              \
     do {                                                             \
@@ -92,7 +163,7 @@ void omx_swvdec_log_init();
         if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
             ALOGI("<<< %s(): " string, __FUNCTION__, ##__VA_ARGS__); \
     } while (0)
-
+#endif
 /// OMX SwVdec event information structure
 typedef struct {
     unsigned long event_id;     ///< event ID

@@ -31,7 +31,7 @@
 #include "ConfigStore.h"
 #include "PlatformConfig.h"
 
-bool isConfigStoreEnabled()
+bool isConfigStoreEnabled(void)
 {
     return Platform::Config::isConfigStoreEnabled();
 }
