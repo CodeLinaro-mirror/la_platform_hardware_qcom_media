@@ -19,6 +19,7 @@ AM_CPPFLAGS += -UINPUT_BUFFER_LOG
 AM_CPPFLAGS += -UOUTPUT_BUFFER_LOG
 AM_CPPFLAGS += -Werror
 AM_CPPFLAGS += -D_ANDROID_ICS_
+AM_CPPFLAGS += -Wno-error=format-truncation
 
 if TARGET_HYPERVISOR
 AM_CPPFLAGS += -DHYPERVISOR
@@ -73,6 +74,8 @@ AM_CPPFLAGS += -I$(WORKSPACE)/display/display-hal/gralloc/
 AM_CPPFLAGS += -I$(WORKSPACE)/display/display-hal/libqdutils/
 AM_CPPFLAGS += -I$(WORKSPACE)/hardware/libhardware/include/
 AM_CPPFLAGS += -I${WORKSPACE}/frameworks/native/include/
+AM_CPPFLAGS += -I$(WORKSPACE)/vendor/qcom/opensource/commonsys-intf/display/gralloc/
+AM_CPPFLAGS += -I$(WORKSPACE)/vendor/qcom/opensource/commonsys-intf/display/libqdmetadata/
 sources = src/omx_video_base.cpp
 sources += src/omx_video_encoder.cpp
 sources += src/video_encoder_device_v4l2.cpp
@@ -85,8 +88,8 @@ libOmxVenc_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxVenc_la_LDFLAGS = -module -shared -avoid-version
 libOmxVenc_la_LDFLAGS += -lstdc++ -lpthread -llog -lutils -lcutils -lglib-2.0 -lbase -ldl -lpthread -lion
 
-libOmxVenc_la_LDFLAGS += -L$(top_builddir)/libplatformconfig
-libOmxVenc_la_LDFLAGS += -lplatformconfig
+libOmxVenc_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert -L$(top_builddir)/libplatformconfig
+libOmxVenc_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
 
 if TARGET_HYPERVISOR
 libOmxVenc_la_LDFLAGS += -L$(top_builddir)/hypv-intercept

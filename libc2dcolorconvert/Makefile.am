@@ -6,6 +6,7 @@ AM_CFLAGS += "-std=c++11"
 
 
 AM_CPPFLAGS = $(CPPFLAGS)
+AM_CPPFLAGS += -I$(WORKSPACE)/vendor/qcom/opensource/commonsys-intf/display/gralloc/
 AM_CPPFLAGS += -I$(WORKSPACE)/graphics/libdrm/freedreno/kgsl/
 AM_CPPFLAGS += -I$(WORKSPACE)/display/display-hal/gralloc/
 AM_CPPFLAGS += -I$(WORKSPACE)/hardware/libhardware/include/

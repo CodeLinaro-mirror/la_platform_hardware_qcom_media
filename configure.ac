@@ -113,6 +113,10 @@ AC_ARG_WITH([sanitized-headers],
         [AS_HELP_STRING([--with-sanitized-headers=DIR],[location of the sanitized Linux kernel headers])],
         [CPPFLAGS="$CPPFLAGS -I $withval"])
 
+AC_ARG_WITH([vidc-headers],
+        [AS_HELP_STRING([--with-vidc-headers=DIR],[location of the vidc Linux kernel headers])],
+        [CPPFLAGS="$CPPFLAGS -I $withval"])
+
 AC_ARG_WITH([glib-headers],
         [AS_HELP_STRING([--with-binder-inc=DIR],[location of common headers])],
         [CPPFLAGS="$CPPFLAGS -I$withval"])
@@ -167,6 +171,10 @@ AC_ARG_WITH([qdutils-headers],
 
 AC_ARG_WITH([glib-lib-dir],
         [AS_HELP_STRING([--with-binder-inc=DIR],[location of common headers])],
+        [CPPFLAGS="$CPPFLAGS -I$withval"])
+
+AC_ARG_WITH([ion-headers],
+        [AS_HELP_STRING([--with-ion-headers=DIR],[location of common headers])],
         [CPPFLAGS="$CPPFLAGS -I$withval"])
 
 AM_CONDITIONAL(TARGET_MSM8953, [test "x$target_msm8953" = "xyes"])
