@@ -68,7 +68,12 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "OMX_QCOMExtns.h"
 #ifdef _ANDROID_
+#ifdef USE_GBM
+#include <gbm.h>
+#include <gbm_priv.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #endif
 
 // BitMask Management logic
@@ -125,7 +130,7 @@ class profile_level_converter {
     static bool convert_omx_level_to_v4l2(int codec, int omx_level, int *v4l2_level, unsigned int *tire);
 };
 
-void get_gralloc_format_as_string(char * buf, int buf_len, int format);
+void get_video_format_as_string(char * buf, int buf_len, int format);
 void get_v4l2_color_format_as_string(char * buf, int buf_len, unsigned long v4l2Pixformat);
 
 #endif // __VIDC_COMMON_H__
