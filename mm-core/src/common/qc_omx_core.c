@@ -24,6 +24,40 @@ OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Changes from Qualcomm Innovation Center are provided under the following license:
+
+Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted (subject to the limitations in the
+disclaimer below) provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+
+    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
 /*============================================================================
                             O p e n M A X   w r a p p e r s
@@ -59,6 +93,48 @@ static pthread_mutex_t lock_core = PTHREAD_MUTEX_INITIALIZER;
 static int number_of_adec_nt_session;
 
 #define MAX_AUDIO_NT_SESSION 2
+
+#ifdef GENIVI_DLT
+DLT_DECLARE_CONTEXT(dlt_con_omx_core);
+
+/* ======================================================================
+FUNCTION
+  omx_core_dlt_register
+
+DESCRIPTION
+  Register dlt application and context.
+
+PARAMETERS
+  None
+
+RETURN VALUE
+  None
+========================================================================= */
+void omx_core_dlt_register(void)
+{
+       DLT_REGISTER_APP("OMXV","omx videocodec");
+       DLT_REGISTER_CONTEXT(dlt_con_omx_core, "CORE", "General Context");
+}
+
+/* ======================================================================
+FUNCTION
+  omx_core_dlt_unregister
+
+DESCRIPTION
+  Unregister dlt application and context.
+
+PARAMETERS
+  None
+
+RETURN VALUE
+  None
+======================================================================== */
+void omx_core_dlt_unregister(void)
+{
+       DLT_UNREGISTER_CONTEXT(dlt_con_omx_core);
+       DLT_UNREGISTER_APP();
+}
+#endif
 
 /* ======================================================================
 FUNCTION
@@ -122,6 +198,9 @@ RETURN VALUE
 OMX_API OMX_ERRORTYPE OMX_APIENTRY
 OMX_Init()
 {
+#ifdef GENIVI_DLT
+  omx_core_dlt_register();
+#endif
   DEBUG_PRINT("OMXCORE API - OMX_Init \n");
   /* Nothing to do here ; shared objects shall be loaded at the get handle method */
   return OMX_ErrorNone;
@@ -350,6 +429,9 @@ RETURN VALUE
 OMX_API OMX_ERRORTYPE OMX_APIENTRY
 OMX_Deinit()
 {
+#ifdef GENIVI_DLT
+  omx_core_dlt_unregister();
+#endif
   return OMX_ErrorNone;
 }
 
@@ -393,7 +475,7 @@ OMX_GetHandle(OMX_OUT OMX_HANDLETYPE*     handle,
       void *libhandle = dlopen("libOmxVideoDSMode.so", RTLD_NOW);
       if(libhandle)
       {
-        int (*fn_ptr)()  = dlsym(libhandle, "isDSModeActive");
+        int (*fn_ptr)(void)  = dlsym(libhandle, "isDSModeActive");
 
         if(fn_ptr == NULL)
         {
