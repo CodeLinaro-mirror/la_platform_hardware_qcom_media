@@ -99,4 +99,5 @@ omx_core_cb_type core[] =
     OMX_REGISTRY_ENTRY("OMX.qcom.video.decoder.avc.dsmode", "libOmxVideoDSMode.so", "video_decoder.avc"),
 };
 const unsigned int SIZE_OF_CORE = sizeof(core) / sizeof(omx_core_cb_type);
-omx_core_cb_type component[SIZE_OF_CORE];
+#define CORE_SIZE (sizeof(core) / sizeof(omx_core_cb_type))
+omx_core_cb_type component[CORE_SIZE];

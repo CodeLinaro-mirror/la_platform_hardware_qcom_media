@@ -70,6 +70,8 @@ AM_CPPFLAGS += -I$(WORKSPACE)/display/display-hal/gralloc/
 AM_CPPFLAGS += -I$(WORKSPACE)/display/display-hal/libqdutils/
 AM_CPPFLAGS += -I$(WORKSPACE)/hardware/libhardware/include/
 AM_CPPFLAGS += -I${WORKSPACE}/frameworks/native/include/
+AM_CPPFLAGS += -I$(WORKSPACE)/vendor/qcom/opensource/commonsys-intf/display/gralloc/
+AM_CPPFLAGS += -I$(WORKSPACE)/vendor/qcom/opensource/commonsys-intf/display/libqdmetadata/
 c_sources = src/ts_parser.cpp
 c_sources += src/omx_vdec_v4l2.cpp
 c_sources += $(top_srcdir)/mm-video-v4l2/vidc/common/src/vidc_common.cpp
@@ -79,7 +81,7 @@ lib_LTLIBRARIES = libOmxVdec.la
 libOmxVdec_la_SOURCES = $(c_sources)
 libOmxVdec_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxVdec_la_LDFLAGS = -module -shared -avoid-version
-libOmxVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lqdMetaData
+libOmxVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion
 libOmxVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig -L$(top_builddir)/libarbitrarybytes
 libOmxVdec_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig -larbitrarybytes
 
