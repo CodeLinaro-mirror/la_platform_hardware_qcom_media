@@ -8865,9 +8865,11 @@ OMX_BUFFERHEADERTYPE* omx_vdec::allocate_color_convert_buf::get_il_buf_hdr
     if (index < omx->drv_ctx.op_buf.actualcount) {
         m_out_mem_ptr_client[index].nFlags = (bufadd->nFlags & OMX_BUFFERFLAG_EOS);
         m_out_mem_ptr_client[index].nTimeStamp = bufadd->nTimeStamp;
+        m_out_mem_ptr_client[index].pMarkData = bufadd->pMarkData;
 
         omx->m_out_mem_ptr[index].nFlags = (bufadd->nFlags & OMX_BUFFERFLAG_EOS);
         omx->m_out_mem_ptr[index].nTimeStamp = bufadd->nTimeStamp;
+        omx->m_out_mem_ptr[index].pMarkData = bufadd->pMarkData;
         bool status = false;
         if (!omx->in_reconfig && !omx->output_flush_progress && bufadd->nFilledLen) {
             pthread_mutex_lock(&omx->c_lock);
