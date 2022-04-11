@@ -59,6 +59,10 @@ if TARGET_MSM8909
 TARGET_REGISTRY = 8909
 endif
 
+if TARGET_USES_DLT
+AM_CPPFLAGS += -DGENIVI_DLT
+endif
+
 c_sources +=src/registry_table_android.c
 
 lib_LTLIBRARIES = libOmxCore.la
