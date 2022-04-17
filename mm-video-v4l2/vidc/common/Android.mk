@@ -28,9 +28,14 @@ libmm-vidc-inc      := $(LOCAL_PATH)/inc
 libmm-vidc-inc      += $(TOP)/hardware/qcom/media/mm-core/inc
 libmm-vidc-inc      += $(TOP)/hardware/qcom/media/mm-video-v4l2/vidc/vdec/inc
 libmm-vidc-inc      += $(TOP)/hardware/qcom/media/libc2dcolorconvert
+ifeq ($(TARGET_KERNEL_VERSION), 5.15)
+libmm-vdec-inc      += $(TOP)/vendor/qcom/opensource/video-driver/include/uapi/
+libmm-vidc-inc      += $(TOP)/vendor/qcom/opensource/video-driver/include/uapi/
+else
 libmm-vdec-inc      += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
-libmm-vidc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-vidc-inc      += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
+endif
+libmm-vidc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-vidc-inc      += $(TOP)/hardware/libhardware/include
 libmm-vidc-inc      += $(TOP)/frameworks/native/headers/media_plugin
 libmm-vidc-inc      += $(TARGET_OUT_HEADERS)/qcom/display
