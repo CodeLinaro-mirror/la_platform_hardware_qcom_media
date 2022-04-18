@@ -1,3 +1,4 @@
+
 /*--------------------------------------------------------------------------
 Copyright (c) 2010 - 2020, The Linux Foundation. All rights reserved.
 
@@ -738,6 +739,34 @@ OMX_ERRORTYPE  omx_vdec::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                                                      QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m) {
                                         op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_NV12;
                                         fmt.fmt.pix_mp.pixelformat = capture_capability = V4L2_PIX_FMT_NV12;
+#ifdef _OUTPUT_DEINTERLACED_
+                                        if (VDEC_CODECTYPE_MPEG2 == drv_ctx.decoder_format) {
+                                          m_disable_ubwc_mode = true;
+                                          op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_NV12_UBWC;
+                                          fmt.fmt.pix_mp.pixelformat = capture_capability = V4L2_PIX_FMT_NV12_UBWC;
+                                        }
+#endif
+                                        //check if the required color format is a supported flexible format
+                                        is_flexible_format = check_supported_flexible_formats(portFmt->eColorFormat);
+                                    } else if (portFmt->eColorFormat == (OMX_COLOR_FORMATTYPE)
+                                                    QOMX_COLOR_FORMATYUV420SemiPlanarP010Venus) {
+                                        op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_P010_VENUS;
+                                        fmt.fmt.pix_mp.pixelformat = capture_capability =
+                                                               V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+                                        dpb_bit_depth = MSM_VIDC_BIT_DEPTH_10;
+                                        //check if the required color format is a supported flexible format
+                                        is_flexible_format = check_supported_flexible_formats(portFmt->eColorFormat);
+                                    } else if (portFmt->eColorFormat == (OMX_COLOR_FORMATTYPE)
+                                                    QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m10bitCompressed) {
+                                        if (!m_disable_ubwc_mode) {
+                                            op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_NV12_TP10_UBWC;
+                                            fmt.fmt.pix_mp.pixelformat = capture_capability = V4L2_PIX_FMT_NV12_TP10_UBWC;
+                                        } else {
+                                            op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_P010_VENUS;
+                                            fmt.fmt.pix_mp.pixelformat = capture_capability =
+                                                               V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+                                        }
+                                        dpb_bit_depth = MSM_VIDC_BIT_DEPTH_10;
                                         //check if the required color format is a supported flexible format
                                         is_flexible_format = check_supported_flexible_formats(portFmt->eColorFormat);
                                     } else if (portFmt->eColorFormat == (OMX_COLOR_FORMATTYPE)
@@ -745,7 +774,7 @@ OMX_ERRORTYPE  omx_vdec::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                                                portFmt->eColorFormat == OMX_COLOR_FormatYUV420Planar ||
                                                portFmt->eColorFormat == OMX_COLOR_FormatYUV420SemiPlanar ||
                                                portFmt->eColorFormat == OMX_COLOR_Format16bitRGB565) {
-                                        if (!m_disable_ubwc_mode) {
+                                        if (!m_disable_ubwc_mode || VDEC_CODECTYPE_MPEG2 == drv_ctx.decoder_format) {
                                             op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_NV12_UBWC;
                                             fmt.fmt.pix_mp.pixelformat = capture_capability = V4L2_PIX_FMT_NV12_UBWC;
                                         } else {

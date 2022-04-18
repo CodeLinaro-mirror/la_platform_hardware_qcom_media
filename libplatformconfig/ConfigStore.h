@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 // wrappers to allow C files to access ConfigStore
-bool isConfigStoreEnabled();
+bool isConfigStoreEnabled(void);
 uint32_t getConfigStoreBool(const char *area, const char *config,
         bool *value, const bool defaultValue);
 

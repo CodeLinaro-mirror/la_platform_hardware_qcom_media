@@ -24,6 +24,41 @@ OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Changes from Qualcomm Innovation Center are provided under the following license:
+
+Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted (subject to the limitations in the
+disclaimer below) provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+
+    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 --------------------------------------------------------------------------*/
 
 /*============================================================================
@@ -604,6 +639,9 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
     m_prefetch_done(0),
     m_buffer_error(false)
 {
+#ifdef GENIVI_DLT
+    omx_vidc_dlt_register();
+#endif
     m_poll_efd = -1;
     memset(&drv_ctx, 0, sizeof(drv_ctx));
     drv_ctx.video_driver_fd = -1;
@@ -901,6 +939,9 @@ omx_vdec::~omx_vdec()
     }
     DEBUG_PRINT_INFO("Exit OMX vdec Destructor: fd=%d",drv_ctx.video_driver_fd);
     m_perf_control.perf_lock_release();
+#ifdef GENIVI_DLT
+    omx_vidc_dlt_unregister();
+#endif
 }
 
 bool omx_vdec::check_supported_flexible_formats(OMX_COLOR_FORMATTYPE required_format)
@@ -3773,7 +3814,12 @@ OMX_ERRORTYPE  omx_vdec::use_output_buffer(
                        drv_ctx.video_resolution.frame_height,
                        drv_ctx.gbm_device_fd,
                        &drv_ctx.op_buf_gbm_info[i],
+#ifdef _OUTPUT_DEINTERLACED_
+                       secure_mode ? GBM_BO_USAGE_PROTECTED_QTI : 0,
+                       false);
+#else
                        secure_mode ? GBM_BO_USAGE_PROTECTED_QTI : 0);
+#endif
                 if (status == false) {
                     DEBUG_PRINT_ERROR("ION device fd is bad %d",
                                       (int) drv_ctx.op_buf_ion_info[i].data_fd);
@@ -4673,7 +4719,12 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
                                drv_ctx.video_resolution.frame_height,
                                drv_ctx.gbm_device_fd,
                                &(*omx_op_buf_gbm_info)[i],
+#ifdef _OUTPUT_DEINTERLACED_
+                               (secure_mode) ? GBM_BO_USAGE_PROTECTED_QTI : cache_flag,
+                               intermediate);
+#else
                                (secure_mode) ? GBM_BO_USAGE_PROTECTED_QTI : cache_flag);
+#endif
             if (status == false) {
                 return OMX_ErrorInsufficientResources;
             }
@@ -6671,7 +6722,11 @@ int omx_vdec::async_message_process (void *context, void* message)
 
 #ifdef USE_GBM
 bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
+#ifdef _OUTPUT_DEINTERLACED_
+                 struct vdec_gbm *op_buf_gbm_info, int flag, bool intermediate)
+#else
                  struct vdec_gbm *op_buf_gbm_info, int flag)
+#endif
 {
 
     uint32 flags = GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING;
@@ -6693,8 +6748,21 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
        DEBUG_PRINT_LOW( "Successfully created gbm device");
     }
     if (drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_UBWC ||
-           drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_TP10_UBWC)
+           drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_TP10_UBWC) {
+
+#ifdef _OUTPUT_DEINTERLACED_
+       OMX_COLOR_FORMATTYPE color_format = OMX_COLOR_FormatUnused;
+       if (!client_buffers.get_color_format(color_format)) {
+            DEBUG_PRINT_ERROR("Error in getting color format");
+            return FALSE;
+       }
+       if (intermediate == true || !m_disable_ubwc_mode || color_format != OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar32m) {
+          flags |= GBM_BO_USAGE_UBWC_ALIGNED_QTI;
+       }
+#else
        flags |= GBM_BO_USAGE_UBWC_ALIGNED_QTI;
+#endif
+     }
 
     DEBUG_PRINT_LOW("create NV12 gbm_bo with width=%d, height=%d foramt %x",
        w, h, drv_ctx.output_format);
@@ -6705,6 +6773,9 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
     } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_NV12 ||
               drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_UBWC){
        bo = gbm_bo_create(gbm, w, h,GBM_FORMAT_NV12,
+              flags);
+    } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_P010_VENUS) {
+       bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_P010,
               flags);
     }
     if (bo == NULL) {
@@ -8756,11 +8827,16 @@ bool omx_vdec::allocate_color_convert_buf::set_color_format(
             enable_color_conversion(false);
         }
 #ifdef _OUTPUT_DEINTERLACED_
-    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&
-             dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed) {
-             DEBUG_PRINT_LOW("enable C2D for nv12+interlaced picture");
-             ColorFormat = dest_color_format;
-             dest_format = NV12_UBWC;
+    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&( dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m ||
+             dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed)) {
+             DEBUG_PRINT_LOW(" Enabling C2D, flag disable_ubwc_mode is %d\n", omx->m_disable_ubwc_mode);
+             if (omx->m_disable_ubwc_mode) {
+               ColorFormat = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m;
+               dest_format = NV12_128m;
+             } else {
+               ColorFormat = dest_color_format;
+               dest_format = NV12_UBWC;
+             }
              enable_color_conversion(true);
 #endif
     } else {
@@ -8789,9 +8865,11 @@ OMX_BUFFERHEADERTYPE* omx_vdec::allocate_color_convert_buf::get_il_buf_hdr
     if (index < omx->drv_ctx.op_buf.actualcount) {
         m_out_mem_ptr_client[index].nFlags = (bufadd->nFlags & OMX_BUFFERFLAG_EOS);
         m_out_mem_ptr_client[index].nTimeStamp = bufadd->nTimeStamp;
+        m_out_mem_ptr_client[index].pMarkData = bufadd->pMarkData;
 
         omx->m_out_mem_ptr[index].nFlags = (bufadd->nFlags & OMX_BUFFERFLAG_EOS);
         omx->m_out_mem_ptr[index].nTimeStamp = bufadd->nTimeStamp;
+        omx->m_out_mem_ptr[index].pMarkData = bufadd->pMarkData;
         bool status = false;
         if (!omx->in_reconfig && !omx->output_flush_progress && bufadd->nFilledLen) {
             pthread_mutex_lock(&omx->c_lock);
