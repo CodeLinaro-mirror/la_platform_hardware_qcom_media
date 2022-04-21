@@ -4095,18 +4095,15 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
 
                     if (mUseAVTimerTimestamps) {
                         uint64_t avTimerTimestampNs = bufhdr->nTimeStamp * 1000;
-#ifdef QCS610_TODO_UPDATE
                         if (getMetaData(handle, GET_VT_TIMESTAMP, &avTimerTimestampNs) == 0
                                 && avTimerTimestampNs > 0) {
                             bufhdr->nTimeStamp = avTimerTimestampNs / 1000;
                             DEBUG_PRINT_LOW("AVTimer TS : %llu us", (unsigned long long)bufhdr->nTimeStamp);
                         }
-#endif
                     }
 
                     if (!streaming[OUTPUT_PORT]) {
                         // Moment of truth... actual colorspace is known here..
-#ifdef QCS610_TODO_UPDATE
                         if (getMetaData(handle, GET_COLOR_METADATA, &colorData) == 0) {
                             DEBUG_PRINT_INFO("ENC_CONFIG: gralloc Color MetaData colorPrimaries=%d colorRange=%d "
                                              "transfer=%d matrixcoefficients=%d"
@@ -4115,7 +4112,7 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                                              colorData.transfer, colorData.matrixCoefficients,
                                              colorData.dynamicMetaDataValid, colorData.dynamicMetaDataLen);
                         }
-#endif
+
                         struct v4l2_format fmt;
                         memset(&fmt, 0, sizeof(fmt));
                         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -4238,19 +4235,16 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                         }
                     } else {
                         if (m_hdr10meta_enabled) {
-#ifdef QCS610_TODO_UPDATE
                             if (getMetaData(handle, GET_COLOR_METADATA, &colorData) == 0) {
                                 DEBUG_PRINT_INFO("ENC_CONFIG: gralloc Color MetaData dynamicMetaDataValid=%u dynamicMetaDataLen=%u",
                                                  colorData.dynamicMetaDataValid, colorData.dynamicMetaDataLen);
                             }
-#endif
                         }
                     } // Check OUTPUT Streaming
 
                     struct UBWCStats cam_ubwc_stats[2];
                     unsigned long long int compression_ratio = 1 << 16;
 
-#ifdef QCS610_TODO_UPDATE
                     if (getMetaData(handle, GET_UBWC_CR_STATS_INFO, (void *)cam_ubwc_stats) == 0) {
                         if (cam_ubwc_stats[0].bDataValid) {
                             switch (cam_ubwc_stats[0].version) {
@@ -4303,10 +4297,8 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                             }
                         }
                     }
-#endif
 
                     uint32_t encodePerfMode = 0;
-#ifdef QCS610_TODO_UPDATE
                     if (getMetaData(handle, GET_VIDEO_PERF_MODE, &encodePerfMode) == 0) {
                         if (encodePerfMode == OMX_TRUE) {
                             buf.flags |= V4L2_BUF_FLAG_PERF_MODE;
@@ -4314,7 +4306,6 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                         // Clear SET_VIDEO_PERF_MODE in buffer handle
                         setMetaData(handle, SET_VIDEO_PERF_MODE, 0);
                     }
-#endif
                     fd = handle->fd;
                     plane[0].data_offset = 0;
                     plane[0].length = handle->size;
