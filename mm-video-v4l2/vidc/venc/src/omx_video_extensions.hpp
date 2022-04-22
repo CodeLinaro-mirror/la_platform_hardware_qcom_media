@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2017, The Linux Foundation. All rights reserved.
+Copyright (c) 2017-2022, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -95,6 +95,27 @@ void omx_video::init_vendor_extensions(VendorExtensionStore &store) {
     ADD_EXTENSION("qti-ext-enc-base-layer-pid", OMX_QcomIndexConfigBaseLayerId, OMX_DirInput)
     ADD_PARAM_END("value", OMX_AndroidVendorValueInt32)
 
+    ADD_EXTENSION("qti-ext-enc-initial-qp", QOMX_IndexParamVideoInitialQp, OMX_DirOutput)
+    ADD_PARAM    ("qp-i", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-i-enable", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-p", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-p-enable", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-b", OMX_AndroidVendorValueInt32)
+    ADD_PARAM_END("qp-b-enable", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-qp-range", OMX_QcomIndexParamVideoIPBQPRange, OMX_DirOutput)
+    ADD_PARAM    ("qp-i-min", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-i-max", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-p-min", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-p-max", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("qp-b-min", OMX_AndroidVendorValueInt32)
+    ADD_PARAM_END("qp-b-max", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-low-latency", OMX_QcomIndexConfigVideoVencLowLatencyMode, OMX_DirInput)
+    ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-dynamic-frame-rate", OMX_IndexConfigVideoFramerate, OMX_DirOutput)
+    ADD_PARAM_END("frame-rate", OMX_AndroidVendorValueInt32)
 }
 
 OMX_ERRORTYPE omx_video::get_vendor_extension_config(
@@ -246,6 +267,36 @@ OMX_ERRORTYPE omx_video::get_vendor_extension_config(
         case OMX_QcomIndexConfigBaseLayerId:
         {
             setStatus &= vExt.setParamInt32(ext, "value", m_sBaseLayerID.nPID);
+            break;
+        }
+        case QOMX_IndexParamVideoInitialQp:
+        {
+            setStatus &= vExt.setParamInt32(ext, "qp-i", m_sParamInitqp.nQpI);
+            setStatus &= vExt.setParamInt32(ext, "qp-p", m_sParamInitqp.nQpP);
+            setStatus &= vExt.setParamInt32(ext, "qp-b", m_sParamInitqp.nQpB);
+            setStatus &= vExt.setParamInt32(ext, "qp-i-enable", (m_sParamInitqp.bEnableInitQp & 0x1));
+            setStatus &= vExt.setParamInt32(ext, "qp-p-enable", ((m_sParamInitqp.bEnableInitQp >> 0x1) & 0x1));
+            setStatus &= vExt.setParamInt32(ext, "qp-b-enable", ((m_sParamInitqp.bEnableInitQp >> 0x2) & 0x1));
+            break;
+        }
+        case OMX_QcomIndexParamVideoIPBQPRange:
+        {
+            setStatus &= vExt.setParamInt32(ext, "qp-i-min", m_sSessionIPBQPRange.minIQP);
+            setStatus &= vExt.setParamInt32(ext, "qp-i-max", m_sSessionIPBQPRange.maxIQP);
+            setStatus &= vExt.setParamInt32(ext, "qp-p-min", m_sSessionIPBQPRange.minPQP);
+            setStatus &= vExt.setParamInt32(ext, "qp-p-max", m_sSessionIPBQPRange.maxPQP);
+            setStatus &= vExt.setParamInt32(ext, "qp-b-min", m_sSessionIPBQPRange.minBQP);
+            setStatus &= vExt.setParamInt32(ext, "qp-b-max", m_sSessionIPBQPRange.maxBQP);
+            break;
+        }
+        case OMX_QcomIndexConfigVideoVencLowLatencyMode:
+        {
+            setStatus &= vExt.setParamInt32(ext, "enable", m_slowLatencyMode.bLowLatencyMode);
+            break;
+        }
+        case OMX_IndexConfigVideoFramerate:
+        {
+            setStatus &= vExt.setParamInt32(ext, "frame-rate", m_sConfigFramerate.xEncodeFramerate >> 16);
             break;
         }
         default:
@@ -571,6 +622,100 @@ OMX_ERRORTYPE omx_video::set_vendor_extension_config(
                 DEBUG_PRINT_ERROR("set_config: OMX_IndexConfigTimePosition failed !");
             }
 
+            break;
+        }
+        case QOMX_IndexParamVideoInitialQp:
+        {
+            QOMX_EXTNINDEX_VIDEO_INITIALQP initQP;
+            OMX_INIT_STRUCT(&initQP, QOMX_EXTNINDEX_VIDEO_INITIALQP);
+            initQP.nPortIndex = (OMX_U32)PORT_INDEX_OUT;
+            OMX_S32 enableIQp = (m_sParamInitqp.bEnableInitQp & 0x1);
+            OMX_S32 enablePQp = ((m_sParamInitqp.bEnableInitQp >> 0x1) & 0x1);
+            OMX_S32 enableBQp = ((m_sParamInitqp.bEnableInitQp >> 0x2) & 0x1);
+            initQP.nQpI = m_sParamInitqp.nQpI;
+            initQP.nQpP = m_sParamInitqp.nQpP;
+            initQP.nQpB = m_sParamInitqp.nQpB;
+            initQP.bEnableInitQp = m_sParamInitqp.bEnableInitQp;
+            valueSet |= vExt.readParamInt32(ext, "qp-i", (OMX_S32 *)&(initQP.nQpI));
+            valueSet |= vExt.readParamInt32(ext, "qp-b", (OMX_S32 *)&(initQP.nQpB));
+            valueSet |= vExt.readParamInt32(ext, "qp-p", (OMX_S32 *)&(initQP.nQpP));
+            valueSet |= vExt.readParamInt32(ext, "qp-i-enable", (OMX_S32 *)&enableIQp);
+            valueSet |= vExt.readParamInt32(ext, "qp-p-enable", (OMX_S32 *)&enablePQp);
+            valueSet |= vExt.readParamInt32(ext, "qp-b-enable", (OMX_S32 *)&enableBQp);
+            initQP.bEnableInitQp = (((enableIQp == 0x1) << 0x0 ) | ((enablePQp == 0x1) << 0x1 ) | ((enableBQp == 0x1) << 0x2 ));
+            if (!valueSet) {
+                break;
+            }
+
+            DEBUG_PRINT_HIGH("VENDOR-EXT: set_param: QOMX_IndexParamVideoInitialQp I/B/P value: %d %d %d",
+                initQP.nQpI,initQP.nQpB,initQP.nQpP);
+
+            err = set_parameter(
+                    NULL, (OMX_INDEXTYPE)QOMX_IndexParamVideoInitialQp, &initQP);
+            if (err != OMX_ErrorNone) {
+                DEBUG_PRINT_ERROR("set_param: QOMX_IndexParamVideoInitialQp failed !");
+            }
+            break;
+        }
+        case OMX_QcomIndexParamVideoIPBQPRange:
+        {
+            OMX_QCOM_VIDEO_PARAM_IPB_QPRANGETYPE qpRange;
+            memcpy(&qpRange, &m_sSessionIPBQPRange, sizeof(OMX_QCOM_VIDEO_PARAM_IPB_QPRANGETYPE));
+            valueSet |= vExt.readParamInt32(ext, "qp-i-min", (OMX_S32 *)&(qpRange.minIQP));
+            valueSet |= vExt.readParamInt32(ext, "qp-i-max", (OMX_S32 *)&(qpRange.maxIQP));
+            valueSet |= vExt.readParamInt32(ext, "qp-p-min", (OMX_S32 *)&(qpRange.minPQP));
+            valueSet |= vExt.readParamInt32(ext, "qp-p-max", (OMX_S32 *)&(qpRange.maxPQP));
+            valueSet |= vExt.readParamInt32(ext, "qp-b-min", (OMX_S32 *)&(qpRange.minBQP));
+            valueSet |= vExt.readParamInt32(ext, "qp-b-max", (OMX_S32 *)&(qpRange.maxBQP));
+            if (!valueSet) {
+                break;
+            }
+
+            DEBUG_PRINT_HIGH("VENDOR-EXT: set_param: OMX_QcomIndexParamVideoIPBQPRange for min/max value for I/P/B: %d-%d / %d-%d / %d-%d"
+                ,qpRange.minIQP,qpRange.maxIQP,qpRange.minPQP,qpRange.maxPQP,qpRange.minBQP,qpRange.maxBQP);
+
+            err = set_parameter(
+                    NULL, (OMX_INDEXTYPE)OMX_QcomIndexParamVideoIPBQPRange, &qpRange);
+            if (err != OMX_ErrorNone) {
+                DEBUG_PRINT_ERROR("set_param: OMX_QcomIndexParamVideoIPBQPRange failed !");
+            }
+            break;
+        }
+        case OMX_QcomIndexConfigVideoVencLowLatencyMode:
+        {
+            QOMX_EXTNINDEX_VIDEO_VENC_LOW_LATENCY_MODE lowLatency;
+            memcpy(&lowLatency, &m_slowLatencyMode, sizeof(QOMX_EXTNINDEX_VIDEO_VENC_LOW_LATENCY_MODE));
+            valueSet |= vExt.readParamInt32(ext, "enable", (OMX_S32 *)&(lowLatency.bLowLatencyMode));
+            if (!valueSet) {
+                break;
+            }
+
+            DEBUG_PRINT_HIGH("VENDOR-EXT: set_param: low latency mode =%u", lowLatency.bLowLatencyMode);
+
+            err = set_parameter(
+                    NULL, (OMX_INDEXTYPE)OMX_QcomIndexConfigVideoVencLowLatencyMode, &lowLatency);
+            if (err != OMX_ErrorNone) {
+                DEBUG_PRINT_ERROR("set_param: OMX_QcomIndexConfigVideoVencLowLatencyMode failed !");
+            }
+
+            break;
+        }
+        case OMX_IndexConfigVideoFramerate:
+        {
+            OMX_CONFIG_FRAMERATETYPE rateParam;
+            memcpy(&rateParam, &m_sConfigFramerate, sizeof(OMX_CONFIG_FRAMERATETYPE));
+            valueSet |= vExt.readParamInt32(ext, "frame-rate", (OMX_S32 *)&rateParam.xEncodeFramerate);
+            if (!valueSet) {
+                break;
+            }
+            DEBUG_PRINT_HIGH("VENDOR-EXT: set_config: OMX_IndexConfigVideoFramerate : %d",
+                    rateParam.xEncodeFramerate);
+            rateParam.xEncodeFramerate <<= 16;
+            err = set_config(
+                    NULL, OMX_IndexConfigVideoFramerate, &rateParam);
+            if (err != OMX_ErrorNone) {
+                DEBUG_PRINT_ERROR("set_config: OMX_IndexConfigVideoFramerate failed !");
+            }
             break;
         }
         case OMX_QTIIndexParamCapabilitiesVTDriverVersion:
