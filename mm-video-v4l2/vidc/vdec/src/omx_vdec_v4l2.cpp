@@ -3814,7 +3814,12 @@ OMX_ERRORTYPE  omx_vdec::use_output_buffer(
                        drv_ctx.video_resolution.frame_height,
                        drv_ctx.gbm_device_fd,
                        &drv_ctx.op_buf_gbm_info[i],
+#ifdef _OUTPUT_DEINTERLACED_
+                       secure_mode ? GBM_BO_USAGE_PROTECTED_QTI : 0,
+                       false);
+#else
                        secure_mode ? GBM_BO_USAGE_PROTECTED_QTI : 0);
+#endif
                 if (status == false) {
                     DEBUG_PRINT_ERROR("ION device fd is bad %d",
                                       (int) drv_ctx.op_buf_ion_info[i].data_fd);
@@ -4714,7 +4719,12 @@ OMX_ERRORTYPE  omx_vdec::allocate_output_buffer(
                                drv_ctx.video_resolution.frame_height,
                                drv_ctx.gbm_device_fd,
                                &(*omx_op_buf_gbm_info)[i],
+#ifdef _OUTPUT_DEINTERLACED_
+                               (secure_mode) ? GBM_BO_USAGE_PROTECTED_QTI : cache_flag,
+                               intermediate);
+#else
                                (secure_mode) ? GBM_BO_USAGE_PROTECTED_QTI : cache_flag);
+#endif
             if (status == false) {
                 return OMX_ErrorInsufficientResources;
             }
@@ -6712,7 +6722,11 @@ int omx_vdec::async_message_process (void *context, void* message)
 
 #ifdef USE_GBM
 bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
+#ifdef _OUTPUT_DEINTERLACED_
+                 struct vdec_gbm *op_buf_gbm_info, int flag, bool intermediate)
+#else
                  struct vdec_gbm *op_buf_gbm_info, int flag)
+#endif
 {
 
     uint32 flags = GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING;
@@ -6734,8 +6748,21 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
        DEBUG_PRINT_LOW( "Successfully created gbm device");
     }
     if (drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_UBWC ||
-           drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_TP10_UBWC)
+           drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_TP10_UBWC) {
+
+#ifdef _OUTPUT_DEINTERLACED_
+       OMX_COLOR_FORMATTYPE color_format = OMX_COLOR_FormatUnused;
+       if (!client_buffers.get_color_format(color_format)) {
+            DEBUG_PRINT_ERROR("Error in getting color format");
+            return FALSE;
+       }
+       if (intermediate == true || !m_disable_ubwc_mode || color_format != OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar32m) {
+          flags |= GBM_BO_USAGE_UBWC_ALIGNED_QTI;
+       }
+#else
        flags |= GBM_BO_USAGE_UBWC_ALIGNED_QTI;
+#endif
+     }
 
     DEBUG_PRINT_LOW("create NV12 gbm_bo with width=%d, height=%d foramt %x",
        w, h, drv_ctx.output_format);
@@ -8800,11 +8827,16 @@ bool omx_vdec::allocate_color_convert_buf::set_color_format(
             enable_color_conversion(false);
         }
 #ifdef _OUTPUT_DEINTERLACED_
-    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&
-             dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed) {
-             DEBUG_PRINT_LOW("enable C2D for nv12+interlaced picture");
-             ColorFormat = dest_color_format;
-             dest_format = NV12_UBWC;
+    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&( dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m ||
+             dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed)) {
+             DEBUG_PRINT_LOW(" Enabling C2D, flag disable_ubwc_mode is %d\n", omx->m_disable_ubwc_mode);
+             if (omx->m_disable_ubwc_mode) {
+               ColorFormat = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m;
+               dest_format = NV12_128m;
+             } else {
+               ColorFormat = dest_color_format;
+               dest_format = NV12_UBWC;
+             }
              enable_color_conversion(true);
 #endif
     } else {
@@ -8833,9 +8865,11 @@ OMX_BUFFERHEADERTYPE* omx_vdec::allocate_color_convert_buf::get_il_buf_hdr
     if (index < omx->drv_ctx.op_buf.actualcount) {
         m_out_mem_ptr_client[index].nFlags = (bufadd->nFlags & OMX_BUFFERFLAG_EOS);
         m_out_mem_ptr_client[index].nTimeStamp = bufadd->nTimeStamp;
+        m_out_mem_ptr_client[index].pMarkData = bufadd->pMarkData;
 
         omx->m_out_mem_ptr[index].nFlags = (bufadd->nFlags & OMX_BUFFERFLAG_EOS);
         omx->m_out_mem_ptr[index].nTimeStamp = bufadd->nTimeStamp;
+        omx->m_out_mem_ptr[index].pMarkData = bufadd->pMarkData;
         bool status = false;
         if (!omx->in_reconfig && !omx->output_flush_progress && bufadd->nFilledLen) {
             pthread_mutex_lock(&omx->c_lock);
