@@ -21,17 +21,16 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/adreno
 LOCAL_C_INCLUDES += $(TOP)/vendor/qcom/opensource/commonsys-intf/display/gralloc
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-ifeq ($(TARGET_KERNEL_VERSION), 5.15)
-LOCAL_C_INCLUDES += $(TOP)/vendor/qcom/opensource/video-driver/include/uapi/
-LOCAL_C_INCLUDES += $(TOP)/vendor/qcom/opensource/graphics-kernel/include/uapi/
-else
 LOCAL_C_INCLUDES += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
+ifeq ($(TARGET_KERNEL_VERSION), 5.15)
+LOCAL_C_INCLUDES += $(TOP)/vendor/qcom/proprietary/gles/adreno200/gsl/user/include/
 endif
 
 LOCAL_HEADER_LIBRARIES := \
         libutils_headers \
         libhardware_headers \
-        display_intf_headers
+        display_intf_headers \
+        qti_video_kernel_uapi
 
 LOCAL_SHARED_LIBRARIES := liblog libdl
 
