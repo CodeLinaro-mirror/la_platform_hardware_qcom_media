@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2020 The Linux Foundation. All rights reserved.
+Copyright (c) 2010-2020, 2022 The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -220,6 +220,12 @@ venc_dev::venc_dev(class omx_venc *venc_class)
     Platform::Config::getInt32(Platform::vidc_enc_quality_boost_enable,
             (int32_t *)&mQualityBoostRequested, 0);
     mQualityBoostEligible = false;
+    if (!strncmp(venc_handle->m_platform_name, "kona", 4)) {
+        property_get("vendor.media.target.version", property_value, "0");
+        if(!(strncmp(property_value, "1", PROPERTY_VALUE_MAX))) {
+            mQualityBoostRequested = false;
+        }
+    }
 
     profile_level_converter::init();
 }
