@@ -67,7 +67,12 @@ libmm-venc-inc      += hardware/qcom/media/libstagefrighthw
 libmm-venc-inc      += hardware/qcom/media/libplatformconfig
 libmm-venc-inc      += $(TARGET_OUT_HEADERS)/adreno
 libmm-venc-inc      += hardware/qcom/media/libc2dcolorconvert
+ifeq ($(TARGET_KERNEL_VERSION), 5.15)
+libmm-venc-inc      +=$(TOP)/vendor/qcom/opensource/video-driver/include/uapi/
+libmm-venc-inc      +=$(TOP)/vendor/qcom/opensource/graphics-kernel/include/uapi/
+else
 libmm-venc-inc      += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
+endif
 libmm-venc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativewindow/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativebase/include
@@ -135,7 +140,7 @@ LOCAL_SRC_FILES   += src/video_encoder_device_v4l2_params.cpp
 include $(BUILD_SHARED_LIBRARY)
 
 ifneq ($(call is-board-platform-in-list, $(TARGETS_THAT_DONT_NEED_SW_VENC_MPEG4)),true)
-ifneq ($(TARGET_KERNEL_VERSION), 5.4)
+ifeq ($(shell test $(TARGET_KERNEL_VERSION) -lt 5.4; echo $$?),0)
 # ---------------------------------------------------------------------------------
 # 			Make the Shared library (libOmxSwVencMpeg4)
 # ---------------------------------------------------------------------------------
