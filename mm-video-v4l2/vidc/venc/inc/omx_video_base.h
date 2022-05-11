@@ -191,6 +191,7 @@ enum omx_venc_extradata_types {
     VENC_EXTRADATA_FRAMEDIMENSION = 0x1000000,
     VENC_EXTRADATA_YUV_STATS = 0x800,
     VENC_EXTRADATA_ROI = 0x04000000,
+    VENC_EXTRADATA_FRAME_QP = 0x08000000,
 };
 
 struct output_metabuffer {
