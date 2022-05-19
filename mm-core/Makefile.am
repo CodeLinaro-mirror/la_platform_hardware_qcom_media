@@ -44,6 +44,10 @@ h_sources +=inc/QOMX_SourceExtensions.h
 h_sources +=inc/QOMX_VideoExtensions.h
 h_sources +=inc/OMX_IndexExt.h
 h_sources +=inc/QOMX_StreamingExtensions.h
+h_sources +=inc/OMX_VideoExt.h
+h_sources +=inc/OMX_Skype_VideoExtensions.h
+h_sources +=inc/QCMediaDefs.h
+h_sources +=inc/QCMetaData.h
 
 c_sources  =src/common/omx_core_cmp.cpp
 c_sources +=src/common/qc_omx_core.c
@@ -84,4 +88,3 @@ libmm_omxcore_la_CPPFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libmm_omxcore_la_LDFLAGS  = -L$(top_builddir)/libplatformconfig
 libmm_omxcore_la_LDFLAGS += -ldl -lrt -lpthread -lglib-2.0 -lcutils -lplatformconfig
 libmm_omxcore_la_LDFLAGS += -shared -avoid-version
-
