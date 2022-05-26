@@ -71,8 +71,12 @@ libmm-vdec-inc      	+= $(TOP)/hardware/qcom/media/libc2dcolorconvert
 libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/SwVdec
 libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/swvdec
 libmm-vdec-inc      	+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+ifeq ($(TARGET_KERNEL_VERSION), 5.15)
+libmm-vdec-inc          += $(TOP)/vendor/qcom/opensource/video-driver/include/uapi/
+libmm-vdec-inc          += $(TOP)/vendor/qcom/opensource/graphics-kernel/include/uapi/
+else
 libmm-vdec-inc          += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
-
+endif
 
 ifeq ($(PLATFORM_SDK_VERSION), 18)  #JB_MR2
 libmm-vdec-def += -DANDROID_JELLYBEAN_MR2=1
@@ -153,7 +157,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 ifneq "$(wildcard $(QCPATH) )" ""
 ifneq ($(call is-board-platform-in-list, $(TARGETS_THAT_DONT_NEED_SW_VDEC)),true)
-ifneq ($(TARGET_KERNEL_VERSION), 5.4)
+ifeq ($(shell test $(TARGET_KERNEL_VERSION) -lt 5.4; echo $$?),0)
 
 LOCAL_MODULE                  := libOmxSwVdec
 LOCAL_MODULE_TAGS             := optional
