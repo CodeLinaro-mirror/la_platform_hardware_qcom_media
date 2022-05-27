@@ -112,7 +112,8 @@ RETURN VALUE
 ========================================================================= */
 void omx_core_dlt_register(void)
 {
-       DLT_REGISTER_APP("OMXV","omx videocodec");
+       //App will call DLT_REGISTER_APP
+       //DLT_REGISTER_APP("OMXV","omx videocodec");
        DLT_REGISTER_CONTEXT(dlt_con_omx_core, "CORE", "General Context");
 }
 
@@ -132,7 +133,7 @@ RETURN VALUE
 void omx_core_dlt_unregister(void)
 {
        DLT_UNREGISTER_CONTEXT(dlt_con_omx_core);
-       DLT_UNREGISTER_APP();
+       //DLT_UNREGISTER_APP();
 }
 #endif
 
