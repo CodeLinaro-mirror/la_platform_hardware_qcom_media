@@ -68,6 +68,9 @@ libmm-venc-inc      += hardware/qcom/media/libplatformconfig
 libmm-venc-inc      += $(TARGET_OUT_HEADERS)/adreno
 libmm-venc-inc      += hardware/qcom/media/libc2dcolorconvert
 libmm-venc-inc      += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
+ifeq ($(TARGET_KERNEL_VERSION), 5.15)
+libmm-venc-inc      += $(TOP)/vendor/qcom/proprietary/gles/adreno200/gsl/user/include/
+endif
 libmm-venc-inc      += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativewindow/include
 libmm-venc-inc      += $(TOP)/frameworks/native/libs/nativebase/include
@@ -110,7 +113,8 @@ LOCAL_HEADER_LIBRARIES := \
         libcutils_headers \
         libutils_headers \
         libhardware_headers \
-        display_intf_headers
+        display_intf_headers \
+        qti_video_kernel_uapi
 
 LOCAL_C_INCLUDES                := $(libmm-venc-inc)
 LOCAL_ADDITIONAL_DEPENDENCIES   := $(libmm-venc-add-dep)
@@ -135,7 +139,7 @@ LOCAL_SRC_FILES   += src/video_encoder_device_v4l2_params.cpp
 include $(BUILD_SHARED_LIBRARY)
 
 ifneq ($(call is-board-platform-in-list, $(TARGETS_THAT_DONT_NEED_SW_VENC_MPEG4)),true)
-ifneq ($(TARGET_KERNEL_VERSION), 5.4)
+ifeq ($(TARGET_KERNEL_VERSION),$(filter $(TARGET_KERNEL_VERSION),4.14 4.19 4.9))
 # ---------------------------------------------------------------------------------
 # 			Make the Shared library (libOmxSwVencMpeg4)
 # ---------------------------------------------------------------------------------
