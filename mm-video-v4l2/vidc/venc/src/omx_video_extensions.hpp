@@ -302,7 +302,7 @@ OMX_ERRORTYPE omx_video::get_vendor_extension_config(
         }
         case OMX_QTIIndexParamCapabilitiesMaxLTR:
         {
-            setStatus &= vExt.setParamInt32(ext, "max-count", 3);
+            setStatus &= vExt.setParamInt32(ext, "max-count", 2);
             break;
         }
         case OMX_QTIIndexParamCapabilitiesMaxDownScaleRatio:
