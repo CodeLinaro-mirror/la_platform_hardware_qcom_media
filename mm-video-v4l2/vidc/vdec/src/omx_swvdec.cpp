@@ -2594,10 +2594,26 @@ OMX_ERRORTYPE omx_swvdec::set_frame_attributes(
 
     case OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar32m:
     {
-        m_frame_attributes.stride = VENUS_Y_STRIDE(COLOR_FMT_NV12_512, width);
-        m_frame_attributes.scanlines = VENUS_Y_SCANLINES(COLOR_FMT_NV12_512, height);
+        /**
+         * alignment factors:
+         *
+         * - stride:        128
+         * - scanlines_y:    32
+         * - scanlines_uv:   16
+         * - size:         4096
+         */
 
-        m_frame_attributes.size = VENUS_BUFFER_SIZE(COLOR_FMT_NV12_512, width, height);
+        m_frame_attributes.stride    = ALIGN(width, 128);
+        m_frame_attributes.scanlines = ALIGN(height, 32);
+
+        scanlines_uv = ALIGN(height / 2, 16);
+
+        plane_size_y  = (m_frame_attributes.stride *
+                         m_frame_attributes.scanlines);
+
+        plane_size_uv = m_frame_attributes.stride * scanlines_uv;
+
+        m_frame_attributes.size = ALIGN(plane_size_y + plane_size_uv, 4096);
 
         OMX_SWVDEC_LOG_HIGH("'OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar32m': "
                             "stride %d, scanlines %d, size %d",
