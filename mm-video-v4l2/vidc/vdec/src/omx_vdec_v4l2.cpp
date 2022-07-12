@@ -7351,11 +7351,15 @@ OMX_ERRORTYPE omx_vdec::update_portdef(OMX_PARAM_PORTDEFINITIONTYPE *portDefn)
         ret = ioctl(drv_ctx.video_driver_fd, VIDIOC_G_FMT, &fmt);
         /* Check the return value */
 
-        fmt.fmt.pix_mp.pixelformat = capture_capability;
-        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        ret = ioctl(drv_ctx.video_driver_fd, VIDIOC_S_FMT, &fmt);
-        /* Check the return value */
-
+        /* update_portdef() is also called in get_parameter(),
+         * as per Table 3-17 from OpenMAX_IL_1_2_0_Specification
+         * parameters can only be set at state OMX_StateLoaded/OMX_StateWaitForResources/Disabled Port */
+        if ((m_state == OMX_StateLoaded) || (m_state == OMX_StateWaitForResources) || (m_out_bEnabled == OMX_FALSE)) {
+            fmt.fmt.pix_mp.pixelformat = capture_capability;
+            fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+            ret = ioctl(drv_ctx.video_driver_fd, VIDIOC_S_FMT, &fmt);
+            /* Check the return value */
+        }
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         fmt.fmt.pix_mp.pixelformat = capture_capability;
         ret = ioctl(drv_ctx.video_driver_fd, VIDIOC_G_FMT, &fmt);
