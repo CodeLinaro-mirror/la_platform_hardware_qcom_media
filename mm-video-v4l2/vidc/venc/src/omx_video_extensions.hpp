@@ -440,6 +440,7 @@ OMX_ERRORTYPE omx_video::get_vendor_extension_config(
                 setStatus &= vExt.setParamString(ext, "rect-payload", "");
                 setStatus &= vExt.setParamString(ext, "rect-payload-ext", "");
             }
+            break;
         }
         case OMX_QcomIndexParamBitrateRatio:
         {
