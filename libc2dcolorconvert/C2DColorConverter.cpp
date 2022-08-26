@@ -868,7 +868,16 @@ bool C2DColorConverter::getBuffFilledLen(int32_t port, unsigned int &filled_leng
   if (enabled) {
     ret = getBuffReq(port, &req);
     if (ret) {
-      filled_length = req.size;
+      //For NV12 UBWC non-interlace format, FilledLen should equal to VENUS_BUFFER_SIZE_USED
+      //instead of total buf size(VENUS_BUFFER_SIZE).
+      //During interlace stream decoding, C2D is used in OMX and external output buf's FilledLen
+      //is decided by this getBuffFilledLen(). Under such case, that external output buf's FilledLen
+      //should equal to VENUS_BUFFER_SIZE_USED, just same behaviour as progressive stream decoding.
+      if (port == C2D_OUTPUT && mDstFormat == NV12_UBWC) {
+        filled_length = VENUS_BUFFER_SIZE_USED(COLOR_FMT_NV12_UBWC, mDstWidth, mDstHeight, 0);
+      } else {
+        filled_length = req.size;
+      }
     }
   }
 
