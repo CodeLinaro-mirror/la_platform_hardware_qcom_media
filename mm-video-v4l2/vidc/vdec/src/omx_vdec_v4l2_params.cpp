@@ -741,10 +741,10 @@ OMX_ERRORTYPE  omx_vdec::set_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                                         fmt.fmt.pix_mp.pixelformat = capture_capability = V4L2_PIX_FMT_NV12;
 #ifdef _OUTPUT_DEINTERLACED_
                                         if (VDEC_CODECTYPE_MPEG2 == drv_ctx.decoder_format) {
-                                          m_disable_ubwc_mode = true;
                                           op_format = (enum vdec_output_format)VDEC_YUV_FORMAT_NV12_UBWC;
                                           fmt.fmt.pix_mp.pixelformat = capture_capability = V4L2_PIX_FMT_NV12_UBWC;
                                         }
+                                        m_disable_ubwc_mode = true;
 #endif
                                         //check if the required color format is a supported flexible format
                                         is_flexible_format = check_supported_flexible_formats(portFmt->eColorFormat);

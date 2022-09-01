@@ -72,9 +72,6 @@ libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/SwVdec
 libmm-vdec-inc      	+= $(TARGET_OUT_HEADERS)/mm-video/swvdec
 libmm-vdec-inc      	+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 libmm-vdec-inc          += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
-ifeq ($(TARGET_KERNEL_VERSION), 5.15)
-libmm-vdec-inc          += $(TOP)/vendor/qcom/proprietary/gles/adreno200/gsl/user/include/
-endif
 
 ifeq ($(PLATFORM_SDK_VERSION), 18)  #JB_MR2
 libmm-vdec-def += -DANDROID_JELLYBEAN_MR2=1
@@ -125,7 +122,8 @@ LOCAL_HEADER_LIBRARIES := \
         libutils_headers \
         libhardware_headers \
         display_intf_headers \
-        qti_video_kernel_uapi
+        qti_video_kernel_uapi \
+        qti_gfx_kernel_uapi
 
 LOCAL_C_INCLUDES                += $(libmm-vdec-inc)
 LOCAL_ADDITIONAL_DEPENDENCIES   := $(libmm-vdec-add-dep)
