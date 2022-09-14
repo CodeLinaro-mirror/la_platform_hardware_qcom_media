@@ -149,7 +149,7 @@ struct OMX_QCOM_PARAM_MEMMAPENTRYTYPE
  *               YY   [1 Byte ] - Year (last two digits of year {00..99})
  *               MM   [1 Byte ] - Month (01..12)
  */
-#define VT_DRIVER_VERSION 0x1FD6120A
+#define VT_DRIVER_VERSION 0x1FD61608
 
 typedef enum OMX_QCOMMemoryRegion
 {
