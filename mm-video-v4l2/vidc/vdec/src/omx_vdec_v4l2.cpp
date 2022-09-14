@@ -3379,6 +3379,11 @@ OMX_ERRORTYPE  omx_vdec::set_config(OMX_IN OMX_HANDLETYPE      hComp,
         }
         return ret;
 
+    } else if ((int)configIndex == (int)OMX_IndexVendorVideoSkipCropUpdateInRecfg) {
+        OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG *params = (OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG *)configData;
+        DEBUG_PRINT_HIGH("Index OMX_IndexVendorVideoSkipCropUpdateInRecfg %u", (unsigned int)params->nSkipCropUpdate);
+        m_skip_crop_update_in_reconfig = params->nSkipCropUpdate;
+        return ret;
     } else if ((int)configIndex == (int)OMX_QTIIndexConfigDescribeColorAspects) {
         VALIDATE_OMX_PARAM_DATA(configData, DescribeColorAspectsParams);
         DescribeColorAspectsParams *params = (DescribeColorAspectsParams *)configData;
@@ -7454,7 +7459,7 @@ OMX_ERRORTYPE omx_vdec::update_portdef(OMX_PARAM_PORTDEFINITIONTYPE *portDefn)
                 (int)portDefn->nPortIndex);
         eRet = OMX_ErrorBadPortIndex;
     }
-    if (in_reconfig) {
+    if (in_reconfig && !m_skip_crop_update_in_reconfig) {
         m_extradata_misr.output_crop_rect.nLeft = 0;
         m_extradata_misr.output_crop_rect.nTop = 0;
         m_extradata_misr.output_crop_rect.nWidth = fmt.fmt.pix_mp.width;

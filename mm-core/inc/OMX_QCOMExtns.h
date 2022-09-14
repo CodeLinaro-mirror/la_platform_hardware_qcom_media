@@ -1170,12 +1170,25 @@ typedef struct OMX_VENDOR_VIDEOFRAMERATE  {
    OMX_BOOL bEnabled;       /** Flag to enable or disable client's frame rate value */
 } OMX_VENDOR_VIDEOFRAMERATE;
 
+/**
+ * This structure describes the parameters corresponding
+ * to OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG extension. This is
+ * used for crop update skip to be set from the application..
+ */
+typedef struct OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG {
+    OMX_U32 nSize;              /** Size of the structure in bytes */
+    OMX_VERSIONTYPE nVersion;   /** OMX specification version information */
+    OMX_U32 nSkipCropUpdate;    /** Skip crop update in reconfigure value */
+    OMX_BOOL bEnable;           /** Flag to enable/disable the setting */
+} OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG;
+
 typedef enum OMX_INDEXVENDORTYPE {
     OMX_IndexVendorFileReadInputFilename = 0xFF000001,
     OMX_IndexVendorParser3gpInputFilename = 0xFF000002,
     OMX_IndexVendorVideoExtraData = 0xFF000003,
     OMX_IndexVendorAudioExtraData = 0xFF000004,
     OMX_IndexVendorVideoFrameRate = 0xFF000005,
+    OMX_IndexVendorVideoSkipCropUpdateInRecfg = 0xFF000006,
 } OMX_INDEXVENDORTYPE;
 
 typedef enum OMX_QCOM_VC1RESOLUTIONTYPE
