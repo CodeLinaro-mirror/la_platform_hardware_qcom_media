@@ -134,7 +134,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
             }
         case QOMX_IndexConfigVideoIntraperiod:
             {
-                DEBUG_PRINT_LOW("venc_set_param:QOMX_IndexConfigVideoIntraperiod");
+                DEBUG_PRINT_LOW("venc_set_config:QOMX_IndexConfigVideoIntraperiod");
                 QOMX_VIDEO_INTRAPERIODTYPE *intraperiod =
                     (QOMX_VIDEO_INTRAPERIODTYPE *)configData;
 
@@ -157,7 +157,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
         case OMX_IndexConfigCommonMirror:
             {
                 OMX_CONFIG_MIRRORTYPE *mirror = (OMX_CONFIG_MIRRORTYPE*) configData;
-                DEBUG_PRINT_LOW("venc_set_param: OMX_IndexConfigCommonMirror");
+                DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigCommonMirror");
 
                 if (!venc_handle->m_no_vpss && venc_set_mirror(mirror->eMirror) == false) {
                     DEBUG_PRINT_ERROR("ERROR: Setting OMX_IndexConfigCommonMirror failed");
@@ -199,7 +199,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
         case OMX_IndexConfigVideoAVCIntraPeriod:
             {
                 OMX_VIDEO_CONFIG_AVCINTRAPERIOD *avc_iperiod = (OMX_VIDEO_CONFIG_AVCINTRAPERIOD*) configData;
-                DEBUG_PRINT_LOW("venc_set_param: OMX_IndexConfigVideoAVCIntraPeriod");
+                DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigVideoAVCIntraPeriod");
 
                 if (set_nP_frames(avc_iperiod->nPFrames) == false) {
                     DEBUG_PRINT_ERROR("ERROR: Setting intra period failed");
@@ -227,7 +227,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
             }
         case OMX_IndexParamVideoAndroidVp8Encoder:
            {
-               DEBUG_PRINT_LOW("venc_set_param: OMX_IndexParamVideoAndroidVp8Encoder");
+               DEBUG_PRINT_LOW("venc_set_config: OMX_IndexParamVideoAndroidVp8Encoder");
                OMX_VIDEO_PARAM_ANDROID_VP8ENCODERTYPE *vp8EncodeParams =
                    (OMX_VIDEO_PARAM_ANDROID_VP8ENCODERTYPE *)configData;
 
