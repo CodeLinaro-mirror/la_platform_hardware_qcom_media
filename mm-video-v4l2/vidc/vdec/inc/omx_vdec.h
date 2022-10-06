@@ -895,7 +895,12 @@ class omx_vdec: public qc_omx_component
 
 #ifdef USE_GBM
         bool alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int gbm_device_fd,
-              struct vdec_gbm *gbm_info, int flag);
+              struct vdec_gbm *gbm_info, int flag
+#ifdef _OUTPUT_DEINTERLACED_
+              , bool intermediate
+#endif
+              );
+
         void free_gbm_memory(struct vdec_gbm *buf_gbm_info);
 #endif
 

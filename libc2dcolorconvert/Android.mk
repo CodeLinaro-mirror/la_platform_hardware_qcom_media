@@ -26,7 +26,9 @@ LOCAL_C_INCLUDES += $(TOP)/kernel/msm-5.4/techpack/video/include/uapi/vidc/
 LOCAL_HEADER_LIBRARIES := \
         libutils_headers \
         libhardware_headers \
-        display_intf_headers
+        display_intf_headers \
+        qti_video_kernel_uapi \
+        qti_gfx_kernel_uapi
 
 LOCAL_SHARED_LIBRARIES := liblog libdl
 
