@@ -717,6 +717,9 @@ enum OMX_QCOM_EXTN_INDEXTYPE
     /* Bitrate ratio for temporal layer */
     OMX_QcomIndexParamBitrateRatio = 0x7F00007C,
 
+    /* Set Temporal layers */
+    OMX_QTIIndexParamAndroidVideoTemporalLayering = 0x7F00007D,
+
     /* Capabilities */
     OMX_QTIIndexParamCapabilitiesVTDriverVersion = 0x7F100000,
 

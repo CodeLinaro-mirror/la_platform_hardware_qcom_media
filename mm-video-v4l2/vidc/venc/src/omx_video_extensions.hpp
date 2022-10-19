@@ -150,6 +150,25 @@ void omx_video::init_vendor_extensions(VendorExtensionStore &store) {
     ADD_PARAM    ("max-p-count", OMX_AndroidVendorValueInt32)
     ADD_PARAM_END("max-b-count", OMX_AndroidVendorValueInt32)
 
+    ADD_EXTENSION("qti-ext-enc-temporal-layering", OMX_QTIIndexParamAndroidVideoTemporalLayering, OMX_DirOutput)
+    ADD_PARAM    ("pattern", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("supportedPatterns", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("layerCountMax", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("BLayerCountMax", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("PLayerCountActual", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("BLayerCountActual", OMX_AndroidVendorValueInt32)
+    ADD_PARAM    ("portIndex", OMX_AndroidVendorValueInt32)
+    // Based on OMX_VIDEO_ANDROID_MAXTEMPORALLAYERS
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[0], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[1], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[2], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[3], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[4], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[5], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[6], OMX_AndroidVendorValueInt32)
+    ADD_PARAM(BITRATE_RATIO_VALUES_KEY[7], OMX_AndroidVendorValueInt32)
+    ADD_PARAM_END    ("bitrateRatiosSpecified", OMX_AndroidVendorValueInt32)
+
     ADD_EXTENSION("qti-ext-enc-colorspace-conversion", OMX_QTIIndexParamColorSpaceConversion, OMX_DirInput)
     ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
 
@@ -382,6 +401,24 @@ OMX_ERRORTYPE omx_video::get_vendor_extension_config(
             }
             setStatus &= vExt.setParamInt32(ext, "max-p-count",nPLayerCountMax);
             setStatus &= vExt.setParamInt32(ext, "max-b-count",nBLayerCountMax);
+            break;
+        }
+        case OMX_QTIIndexParamAndroidVideoTemporalLayering:
+        {
+            setStatus &= vExt.setParamInt32(ext, "pattern", m_sParamTemporalLayers.ePattern);
+            setStatus &= vExt.setParamInt32(ext, "supportedPatterns", m_sParamTemporalLayers.eSupportedPatterns);
+            setStatus &= vExt.setParamInt32(ext, "layerCountMax", m_sParamTemporalLayers.nLayerCountMax);
+            setStatus &= vExt.setParamInt32(ext, "BLayerCountMax", m_sParamTemporalLayers.nBLayerCountMax);
+            setStatus &= vExt.setParamInt32(ext, "PLayerCountActual", m_sParamTemporalLayers.nPLayerCountActual);
+            setStatus &= vExt.setParamInt32(ext, "BLayerCountActual", m_sParamTemporalLayers.nBLayerCountActual);
+            setStatus &= vExt.setParamInt32(ext, "portIndex", m_sParamTemporalLayers.nPortIndex);
+            setStatus &= vExt.setParamInt32(ext, "bitrateRatiosSpecified", m_sParamTemporalLayers.bBitrateRatiosSpecified);
+
+            for (int cnt = 0; cnt < OMX_VIDEO_ANDROID_MAXTEMPORALLAYERS; cnt++)
+            {
+                setStatus &= vExt.setParamInt32(ext, BITRATE_RATIO_VALUES_KEY[cnt], m_sParamTemporalLayers.nBitrateRatios[cnt]);
+            }
+
             break;
         }
         case OMX_QTIIndexParamColorSpaceConversion:
@@ -901,6 +938,42 @@ OMX_ERRORTYPE omx_video::set_vendor_extension_config(
         case OMX_QTIIndexParamCapabilitiesRotationSupport:
         case OMX_QTIIndexParamCapabilitiesMaxTemporalLayers:
         {
+            break;
+        }
+        case OMX_QTIIndexParamAndroidVideoTemporalLayering:
+        {
+            OMX_VIDEO_PARAM_ANDROID_TEMPORALLAYERINGTYPE layerParams;
+            OMX_INIT_STRUCT(&layerParams, OMX_VIDEO_PARAM_ANDROID_TEMPORALLAYERINGTYPE);
+            layerParams.nSize = sizeof(OMX_VIDEO_PARAM_ANDROID_TEMPORALLAYERINGTYPE);
+
+            valueSet |= vExt.readParamInt32(ext, "pattern",(OMX_S32 *)&(layerParams.ePattern));
+            valueSet |= vExt.readParamInt32(ext, "layerCountMax",(OMX_S32 *)&(layerParams.nLayerCountMax));
+            valueSet |= vExt.readParamInt32(ext, "BLayerCountMax",(OMX_S32 *)&(layerParams.nBLayerCountMax));
+            valueSet |= vExt.readParamInt32(ext, "PLayerCountActual",(OMX_S32 *)&(layerParams.nPLayerCountActual));
+            valueSet |= vExt.readParamInt32(ext, "BLayerCountActual",(OMX_S32 *)&(layerParams.nBLayerCountActual));
+            valueSet |= vExt.readParamInt32(ext, "portIndex",(OMX_S32 *)&(layerParams.nPortIndex));
+            valueSet |= vExt.readParamInt32(ext, "bitrateRatiosSpecified", (OMX_S32 *)&(layerParams.bBitrateRatiosSpecified));
+
+            if (!valueSet) {
+                break;
+            }
+
+            if(layerParams.bBitrateRatiosSpecified) {
+                for (int cnt = 0; cnt < OMX_VIDEO_ANDROID_MAXTEMPORALLAYERS; cnt++)
+                {
+                    OMX_S32 ratio = 0;
+                    vExt.readParamInt32(ext, BITRATE_RATIO_VALUES_KEY[cnt],(OMX_S32 *)&(ratio));
+                    if (ratio > 0) {
+                        layerParams.nBitrateRatios[cnt] = (OMX_U32)ratio;
+                    }
+                }
+            }
+
+            err = set_parameter(
+                    NULL, (OMX_INDEXTYPE)OMX_IndexParamAndroidVideoTemporalLayering, &layerParams);
+            if (err != OMX_ErrorNone) {
+                DEBUG_PRINT_ERROR("set_param: OMX_IndexParamAndroidVideoTemporalLayering failed !");
+            }
             break;
         }
         case QOMX_IndexParamVideoInitialQp:
