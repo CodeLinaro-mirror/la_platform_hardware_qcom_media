@@ -7024,6 +7024,28 @@ OMX_ERRORTYPE  omx_vdec::allocate_input_buffer(
             return OMX_ErrorInsufficientResources;
         }
 
+        // Try to STREAMON OUTPUT Plane here as during the period
+        // from here till STREAMON in empty_this_buffer_proxy,
+        // if stream off operation comes too fast than the first ETB,
+        // the OUTPUT Plane will never be STREAMON and may cause some errors.
+        if (!streaming[OUTPUT_PORT]) {
+            enum v4l2_buf_type buf_type;
+            int ret;
+
+            buf_type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            ret = ioctl(drv_ctx.video_driver_fd, VIDIOC_STREAMON, &buf_type);
+            if (!ret) {
+                DEBUG_PRINT_ERROR("Stream on OUTPUT Plane was successful");
+                streaming[OUTPUT_PORT] = true;
+            } else if (errno == EBUSY) {
+                DEBUG_PRINT_ERROR("Failed to call stream on OUTPUT due to HW_OVERLOAD");
+                return OMX_ErrorInsufficientResources;
+            } else {
+                DEBUG_PRINT_ERROR("Failed to call streamon on OUTPUT");
+                return OMX_ErrorBadParameter;
+            }
+        }
+
         input = *bufferHdr;
         BITMASK_SET(&m_inp_bm_count,i);
         DEBUG_PRINT_LOW("Buffer address %p of pmem",*bufferHdr);
