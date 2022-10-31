@@ -146,6 +146,9 @@ omx_swvdec::omx_swvdec():
     m_pmem_info(NULL),
     m_gbm_device_fd(-1),
 #endif
+#ifdef USE_DMABUFHEAP
+    m_bufferAllocator(NULL),
+#endif
     m_meta_buffer_array(NULL)
 {
 #ifdef GENIVI_DLT
@@ -294,6 +297,16 @@ OMX_ERRORTYPE omx_swvdec::component_init(OMX_STRING cmp_name)
         callback.pfn_event_notification = swvdec_event_handler_callback;
         callback.p_client               = this;
 
+#ifdef USE_DMABUFHEAP
+        m_bufferAllocator = CreateDmabufHeapBufferAllocator();
+        if (m_bufferAllocator == NULL) {
+            OMX_SWVDEC_LOG_ERROR("failed to create dmabufheap buffer allocator");
+            retval = OMX_ErrorInsufficientResources;
+            goto component_init_exit;
+        }
+#endif
+
+
         if ((retval_swvdec = swvdec_init(&m_swvdec_handle,
                                          m_swvdec_codec,
                                          &callback)) !=
@@ -386,6 +399,13 @@ OMX_ERRORTYPE omx_swvdec::component_deinit(OMX_HANDLETYPE cmp_handle)
     {
         OMX_SWVDEC_LOG_ERROR("cmp_handle = NULL");
     }
+
+#ifdef USE_DMABUFHEAP
+    if (m_bufferAllocator != NULL) {
+        FreeDmabufHeapBufferAllocator(m_bufferAllocator);
+        m_bufferAllocator = NULL;
+    }
+#endif
 
     pthread_mutex_destroy(&m_meta_buffer_array_mutex);
 
@@ -3681,7 +3701,16 @@ OMX_ERRORTYPE omx_swvdec::buffer_allocate_ip(
         OMX_SWVDEC_LOG_HIGH("ip buffer %d: %d bytes being allocated",
                             ii,
                             size);
+        m_buffer_array_ip[ii].ion_info.dev_fd  = -1;
+#ifdef USE_DMABUFHEAP
+        m_buffer_array_ip[ii].ion_info.data_fd =
+               DmabufHeapAlloc(m_bufferAllocator, "qcom,system-uncached", size, 0, 0);
+        if (m_buffer_array_ip[ii].ion_info.data_fd < 0) {
+            retval = OMX_ErrorInsufficientResources;
+            goto buffer_allocate_ip_exit;
+        }
 
+#else
         m_buffer_array_ip[ii].ion_info.dev_fd=
             ion_memory_alloc_map(&m_buffer_array_ip[ii].ion_info,size,
                                   m_port_ip.def.nBufferAlignment);
@@ -3691,7 +3720,7 @@ OMX_ERRORTYPE omx_swvdec::buffer_allocate_ip(
             retval = OMX_ErrorInsufficientResources;
             goto buffer_allocate_ip_exit;
         }
-
+#endif
         pmem_fd = m_buffer_array_ip[ii].ion_info.data_fd;
 
         bufferaddr = ion_map(pmem_fd,size);
@@ -3703,8 +3732,9 @@ OMX_ERRORTYPE omx_swvdec::buffer_allocate_ip(
                                  size, strerror(errno));
 
             close(pmem_fd);
+#ifdef USE_DMABUFHEAP
             ion_memory_free(&m_buffer_array_ip[ii].ion_info);
-
+#endif
             retval = OMX_ErrorInsufficientResources;
             goto buffer_allocate_ip_exit;
         }
@@ -3845,6 +3875,16 @@ OMX_ERRORTYPE omx_swvdec::buffer_allocate_op(
         pmem_fd = m_buffer_array_op[ii].gbm_info.bo_fd;
         pmeta_fd = m_buffer_array_op[ii].gbm_info.meta_fd;
 #else
+        m_buffer_array_ip[ii].ion_info->dev_fd = -1;
+#ifdef USE_DMABUFHEAP
+        m_buffer_array_ip[ii].ion_info->data_fd =
+                DmabufHeapAlloc(m_bufferAllocator, "qcom,system-uncached", size, 0, 0);
+        if (m_buffer_array_ip[ii].ion_info->data_fd < 0) {
+            retval = OMX_ErrorInsufficientResources;
+            goto buffer_allocate_op_exit;
+        }
+
+#else
         m_buffer_array_op[ii].ion_info.dev_fd=
             ion_memory_alloc_map(&m_buffer_array_op[ii].ion_info,size,
                                  m_port_op.def.nBufferAlignment);
@@ -3854,6 +3894,7 @@ OMX_ERRORTYPE omx_swvdec::buffer_allocate_op(
             retval = OMX_ErrorInsufficientResources;
             goto buffer_allocate_op_exit;
         }
+#endif
 
         pmem_fd = m_buffer_array_op[ii].ion_info.data_fd;
 #endif
@@ -3868,7 +3909,9 @@ OMX_ERRORTYPE omx_swvdec::buffer_allocate_op(
             gbm_memory_free(&m_buffer_array_op[ii].gbm_info);
 #else
             close(pmem_fd);
+#ifndef USE_DMABUFHEAP
             ion_memory_free(&m_buffer_array_op[ii].ion_info);
+#endif
 #endif
             retval = OMX_ErrorInsufficientResources;
             goto buffer_allocate_op_exit;
@@ -4367,8 +4410,9 @@ OMX_ERRORTYPE omx_swvdec::buffer_deallocate_ip(
 
             close(m_buffer_array_ip[ii].buffer_payload.pmem_fd);
             m_buffer_array_ip[ii].buffer_payload.pmem_fd = -1;
-
+#ifndef USE_DMABUFHEAP
             ion_memory_free(&m_buffer_array_ip[ii].ion_info);
+#endif
 
             for (ii = 0; ii < m_port_ip.def.nBufferCountActual; ii++)
             {
@@ -4494,8 +4538,9 @@ OMX_ERRORTYPE omx_swvdec::buffer_deallocate_op(
             close(m_buffer_array_op[ii].buffer_payload.pmem_fd);
 
             m_buffer_array_op[ii].buffer_payload.pmem_fd = -1;
-
+#ifndef USE_DMABUFHEAP
             ion_memory_free(&m_buffer_array_op[ii].ion_info);
+#endif
 #endif
         }
 
