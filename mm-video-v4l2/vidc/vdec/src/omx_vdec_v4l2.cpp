@@ -328,7 +328,7 @@ void* async_message_thread (void *input)
                 struct vdec_msginfo vdec_msg;
                 vdec_msg.msgcode = VDEC_MSG_EVT_HW_ERROR;
                 vdec_msg.status_code = VDEC_S_SUCCESS;
-                DEBUG_PRINT_HIGH("SYS Error Recieved");
+                DEBUG_PRINT_ERROR("SYS Error Recieved");
                 if (omx->async_message_process(input,&vdec_msg) < 0) {
                     DEBUG_PRINT_HIGH("async_message_thread Exited");
                     break;
@@ -6459,6 +6459,7 @@ int omx_vdec::async_message_process (void *context, void* message)
     switch (vdec_msg->msgcode) {
 
         case VDEC_MSG_EVT_HW_ERROR:
+            DEBUG_PRINT_ERROR("VDEC_MSG_EVT_HW_ERROR");
             omx->post_event ((unsigned)NULL, vdec_msg->status_code,\
                     OMX_COMPONENT_GENERATE_HARDWARE_ERROR);
             break;
@@ -6518,7 +6519,7 @@ int omx_vdec::async_message_process (void *context, void* message)
             omxhdr = omx->m_inp_mem_ptr + v4l2_buf_ptr->index;
 
             if (v4l2_buf_ptr->flags & V4L2_BUF_INPUT_UNSUPPORTED) {
-                DEBUG_PRINT_HIGH("Unsupported input");
+                DEBUG_PRINT_ERROR("Unsupported input");
                 omx->post_event ((unsigned)NULL, vdec_msg->status_code,\
                         OMX_COMPONENT_GENERATE_HARDWARE_ERROR);
             }
@@ -6718,6 +6719,11 @@ int omx_vdec::async_message_process (void *context, void* message)
                 omx->post_event ((unsigned long)NULL, vdec_msg->status_code,
                         OMX_COMPONENT_GENERATE_EOS_DONE);
             } else {
+                DEBUG_PRINT_ERROR("Invalid output omxhdr %p, omx_base_address %p", omxhdr, omx_base_address);
+                if (omxhdr) {
+                    DEBUG_PRINT_ERROR("Invalid output pOutputPortPrivate %p, actualcount %d",
+                        omxhdr->pOutputPortPrivate, (int)omx->drv_ctx.op_buf.actualcount);
+                }
                 omx->post_event ((unsigned int)NULL, vdec_msg->status_code,
                         OMX_COMPONENT_GENERATE_HARDWARE_ERROR);
             }
