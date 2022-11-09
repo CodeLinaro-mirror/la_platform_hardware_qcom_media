@@ -93,8 +93,10 @@ omx_core_cb_type core[] =
 #ifndef _BENGAL_
     OMX_REGISTRY_ENTRY("OMX.qcom.video.decoder.mpeg2", "libOmxVdec.so", "video_decoder.mpeg2"),
     OMX_REGISTRY_ENTRY("OMX.qcom.video.decoder.mpeg2.secure", "libOmxVdec.so", "video_decoder.mpeg2"),
+#ifndef _DIREWOLF_
     OMX_REGISTRY_ENTRY("OMX.qcom.video.decoder.vp8", "libOmxVdec.so", "video_decoder.vp8"),
     OMX_REGISTRY_ENTRY("OMX.qcom.video.encoder.vp8", "libOmxVenc.so", "video_encoder.vp8"),
+#endif
     OMX_REGISTRY_ENTRY("OMX.qti.vdec.vpp", "libOmxVpp.so", "iv_processor.yuv"),
 #endif
 
