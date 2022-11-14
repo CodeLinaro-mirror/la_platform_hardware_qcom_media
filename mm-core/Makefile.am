@@ -63,6 +63,10 @@ if TARGET_USES_DLT
 AM_CPPFLAGS += -DGENIVI_DLT
 endif
 
+if TARGET_DIREWOLF_VPU
+AM_CPPFLAGS += -D_DIREWOLF_
+endif
+
 c_sources +=src/registry_table_android.c
 
 lib_LTLIBRARIES = libOmxCore.la
