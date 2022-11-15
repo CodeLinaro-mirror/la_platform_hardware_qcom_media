@@ -69,6 +69,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 #include <linux/ion.h>
 #endif
+#ifdef USE_DMABUFHEAP
+#include <BufferAllocator/BufferAllocatorWrapper.h>
+#endif
 
 #include "C2DColorConverter.h"
 
@@ -1140,7 +1143,9 @@ class omx_vdec: public qc_omx_component
         DescribeHDRStaticInfoParams m_internal_hdr_info;
 
         bool m_disable_ubwc_mode;
-
+#ifdef USE_DMABUFHEAP
+        BufferAllocator *m_bufferAllocator;
+#endif
         unsigned int m_fill_output_msg;
         bool client_set_fps;
         unsigned int stereo_output_mode;
