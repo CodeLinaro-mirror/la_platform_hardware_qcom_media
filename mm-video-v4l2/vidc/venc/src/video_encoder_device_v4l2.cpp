@@ -3589,6 +3589,7 @@ bool venc_dev::venc_set_intra_refresh()
 {
     int rc;
     struct v4l2_control control_mode;
+    struct v4l2_control enable_only_base_layer_ir;
 
     // Default is RANDOM mode
     control_mode.id = V4L2_CID_MPEG_VIDC_VIDEO_INTRA_REFRESH_RANDOM;
@@ -3610,7 +3611,23 @@ bool venc_dev::venc_set_intra_refresh()
         // This key is ignored if the video encoder does not support the intra refresh feature.
         // From android developer reference documentation.
     }
+    enable_only_base_layer_ir.id =
+        V4L2_CID_MPEG_VIDC_ENABLE_ONLY_BASE_LAYER_IR;
+    enable_only_base_layer_ir.value =
+        intra_refresh.bEnableOnlyBaseLayerIR;
 
+    DEBUG_PRINT_LOW("Calling IOCTL set control for id=%x, val:%d",
+                    enable_only_base_layer_ir.id,
+                    enable_only_base_layer_ir.value);
+    rc = ioctl(m_nDriver_fd, VIDIOC_S_CTRL, &enable_only_base_layer_ir);
+
+    if (rc) {
+        DEBUG_PRINT_HIGH("Failed to set control, id %#x, value %d, rc:%d",
+                         enable_only_base_layer_ir.id,
+                         enable_only_base_layer_ir.value, rc);
+        // This key is ignored if the video encoder does not support the intra refresh feature.
+        // From android developer reference documentation.
+    }
     return true;
 }
 
