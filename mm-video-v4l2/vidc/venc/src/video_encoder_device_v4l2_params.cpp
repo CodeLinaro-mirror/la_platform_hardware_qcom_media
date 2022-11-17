@@ -1,6 +1,8 @@
 /*--------------------------------------------------------------------------
 Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
 
+Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -333,6 +335,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                     intra_refresh.framecount = intra_refresh_period->nRefreshPeriod;
                     intra_refresh.irmode     = OMX_VIDEO_IntraRefreshRandom;
                     intra_refresh.mbcount    = 0;
+                    intra_refresh.bEnableOnlyBaseLayerIR = OMX_FALSE;
                     venc_set_intra_refresh();
                 } else {
                     DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoIntraRefreshType");
@@ -871,6 +874,7 @@ bool venc_dev::venc_set_param(void *paramData, OMX_INDEXTYPE index)
                     intra_refresh.irmode     = OMX_VIDEO_IntraRefreshCyclic;
                     intra_refresh.mbcount    = intra_refresh_param->nCirMBs;
                     intra_refresh.framecount = 0;
+                    intra_refresh.bEnableOnlyBaseLayerIR = intra_refresh_param->bEnableOnlyBaseLayerIR;
                     venc_set_intra_refresh();
                 } else {
                     DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexParamVideoIntraRefresh");
