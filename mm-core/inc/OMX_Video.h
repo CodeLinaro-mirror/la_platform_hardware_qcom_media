@@ -1,6 +1,8 @@
 /**
  * Copyright (c) 2008 The Khronos Group Inc. 
  * 
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -333,6 +335,7 @@ typedef struct OMX_VIDEO_PARAM_INTRAREFRESHTYPE {
     OMX_U32 nAirMBs;
     OMX_U32 nAirRef;
     OMX_U32 nCirMBs;
+    OMX_BOOL bEnableOnlyBaseLayerIR;
 } OMX_VIDEO_PARAM_INTRAREFRESHTYPE;
 
 
