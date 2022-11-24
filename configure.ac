@@ -71,6 +71,11 @@ AC_ARG_ENABLE([target-uses-gbm],
                 [Enable conditional compile for target target-uses-gbm [default=no]]),
         [target_uses_gbm="${enableval}"])
 
+AC_ARG_ENABLE([target-uses-dmabufheap],
+        AC_HELP_STRING([--enable-target-uses-dmabufheap],
+                [Enable conditional compile for target target-uses-dmabufheap [default=no]]),
+        [target_uses_dmabufheap="${enableval}"])
+
 AC_ARG_ENABLE([targets-that-use-flag-msm8226],
         AC_HELP_STRING([--enable-targets-that-use-flag-msm8226],
                 [Enable conditional compile for target targets_that_use_flag_msm8226 [default=no]]),
@@ -121,6 +126,11 @@ AC_ARG_ENABLE([target-uses-dlt],
         AC_HELP_STRING([--enable-target-uses-dlt],
                 [Enable conditional compile for target target-uses-dlt [default=no]]),
         [target_uses_dlt="${enableval}"])
+
+AC_ARG_ENABLE([target-direwolf-vpu],
+        AC_HELP_STRING([--enable-target-direwolf-vpu],
+                [Enable conditional compile for target direwolf vpu [default=no]]),
+        [target_direwolf_vpu="${enableval}"])
 
 AM_CONDITIONAL(TARGET_HYPERVISOR, test "x$target_hypervisor" = "xyes")
 
@@ -193,6 +203,7 @@ AM_CONDITIONAL(TARGETS_THAT_SUPPORT_UBWC, [test "x$targets_that_support_ubwc" = 
 AM_CONDITIONAL(TARGETS_THAT_SUPPORT_PQ, [test "x$targets_that_support_pq" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_ION, [test "x$target_uses_ion" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_GBM, [test "x$target_uses_gbm" = "xyes"])
+AM_CONDITIONAL(TARGET_USES_DMABUFHEAP, [test "x$target_uses_dmabufheap" = "xyes"])
 AM_CONDITIONAL(TARGETS_THAT_USE_FLAG_MSM8226, [test "x$targets_that_use_flag_msm8226" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_MEDIA_EXTENSIONS, [test "x$target_uses_media_extensions" = "xyes"])
 AM_CONDITIONAL(MASTER_SIDE_CP_TARGET_LIST, [test "x$master_side_cp_target_list" = "xyes"])
@@ -201,6 +212,7 @@ AM_CONDITIONAL(BUILD_MM_VIDEO, [test "x$build_mm_video" = "xyes"])
 AM_CONDITIONAL(TARGET_OUTPUT_DEINTERLACED, [test "x$target_output_deinterlaced" = "xyes"])
 AM_CONDITIONAL(BUILD_SWCODEC, [test "x$build_swcodec" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_DLT, [test "x$target_uses_dlt" = "xyes"])
+AM_CONDITIONAL(TARGET_DIREWOLF_VPU, [test "x$target_direwolf_vpu" = "xyes"])
 
 AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],

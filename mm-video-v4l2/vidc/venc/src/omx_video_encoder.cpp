@@ -42,6 +42,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "PlatformConfig.h"
 
+#ifdef USE_DMABUFHEAP
+#include <BufferAllocator/BufferAllocatorWrapper.h>
+#endif
+
 /* defined in mp-ctl.h */
 #define MPCTLV3_VIDEO_ENCODE_PB_HINT 0x41C00000
 
@@ -628,6 +632,10 @@ OMX_ERRORTYPE omx_venc::component_init(OMX_STRING role)
                 dev_set_message_thread_id(async_thread_id);
         }
     }
+
+#ifdef USE_DMABUFHEAP
+    m_bufferAllocator = CreateDmabufHeapBufferAllocator();
+#endif
 
     DEBUG_PRINT_INFO("Component_init : %s : return = 0x%x", m_nkind, eRet);
 
@@ -2140,6 +2148,13 @@ OMX_ERRORTYPE  omx_venc::component_deinit(OMX_IN OMX_HANDLETYPE hComp)
             free(m_inp_mem_ptr);
         m_inp_mem_ptr = NULL;
     }
+
+#ifdef USE_DMABUFHEAP
+    if (m_bufferAllocator != NULL) {
+       FreeDmabufHeapBufferAllocator(m_bufferAllocator);
+       m_bufferAllocator = NULL;
+    }
+#endif
 
     // Reset counters in mesg queues
     m_ftb_q.m_size=0;
