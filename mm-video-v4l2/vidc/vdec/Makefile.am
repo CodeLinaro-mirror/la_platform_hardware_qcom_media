@@ -53,6 +53,11 @@ endif
 if TARGET_USES_GBM
 AM_CPPFLAGS += -DUSE_GBM
 endif
+
+if TARGET_USES_DMABUFHEAP
+AM_CPPFLAGS += -DUSE_DMABUFHEAP
+endif
+
 if TARGET_OUTPUT_DEINTERLACED
 AM_CPPFLAGS += -D_OUTPUT_DEINTERLACED_
 endif
@@ -91,6 +96,9 @@ libOmxVdec_la_LDFLAGS = -module -shared -avoid-version
 libOmxVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion
 libOmxVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig
 libOmxVdec_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
+if TARGET_USES_DMABUFHEAP
+libOmxVdec_la_LDFLAGS += -ldmabufheap
+endif
 
 if BUILD_SWCODEC
 lib_LTLIBRARIES += libOmxSwVdec.la
@@ -105,6 +113,9 @@ libOmxSwVdec_la_LDFLAGS = -module -shared -avoid-version
 libOmxSwVdec_la_LDFLAGS += -llog  -lcutils -lglib-2.0 -lion -lswvdec
 libOmxSwVdec_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert
 libOmxSwVdec_la_LDFLAGS += -lc2dcolorconvert
+if TARGET_USES_DMABUFHEAP
+libOmxSwVdec_la_LDFLAGS += -ldmabufheap
+endif
 endif
 
 if TARGET_HYPERVISOR

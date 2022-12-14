@@ -4940,12 +4940,16 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
         return false;
     }
 
+    ion_info->dev_fd = -1;
     ion_info->data_fd = -1;
+
+#ifndef USE_DMABUFHEAP
     ion_info->dev_fd = ion_open();
     if (ion_info->dev_fd <= 0) {
         DEBUG_PRINT_ERROR("ERROR: ION Device open() Failed");
         return false;
     }
+#endif
 
     if(secure_session) {
         ion_info->alloc_data.len = (size + (SECURE_ALIGN - 1)) & ~(SECURE_ALIGN - 1);
@@ -4954,7 +4958,14 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
         if (ion_info->alloc_data.flags & ION_FLAG_CP_BITSTREAM) {
             ion_info->alloc_data.heap_id_mask |= ION_HEAP(ION_SECURE_DISPLAY_HEAP_ID);
         }
-        DEBUG_PRINT_HIGH("ION ALLOC sec buf: size %u flags %x",
+#ifdef USE_DMABUFHEAP
+        ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "system-secure", ion_info->alloc_data.len, 0, 0);
+        if (ion_info->data_fd < 0) {
+             DEBUG_PRINT_ERROR("secure DmabufHeap ALLOC memory failed");
+             return false;
+        }
+#endif
+        DEBUG_PRINT_HIGH("ION/DMABUFHEAP ALLOC sec buf: size %u flags %x",
                 (unsigned int)ion_info->alloc_data.len,
                 ion_info->alloc_data.flags);
     } else {
@@ -4970,8 +4981,24 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
             DEBUG_PRINT_HIGH("Enabling cacheing for this buffer");
             ion_info->alloc_data.flags = ION_FLAG_CACHED;
         }
+
         ion_info->alloc_data.heap_id_mask = ION_HEAP(ION_SYSTEM_HEAP_ID);
-        DEBUG_PRINT_HIGH("ION ALLOC unsec buf: size %u flags %x",
+#ifdef USE_DMABUFHEAP
+#ifdef HYPERVISOR
+        ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "qcom,system-uncached", ion_info->alloc_data.len, 0, 0);
+#else
+        if (ion_info->alloc_data.flags & ION_FLAG_CACHED) {
+            ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "qcom,system", ion_info->alloc_data.len, 0, 0);
+        } else {
+            ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "qcom,system-uncached", ion_info->alloc_data.len, 0, 0);
+        }
+#endif
+        if (ion_info->data_fd < 0) {
+             DEBUG_PRINT_ERROR("non-secure DmabufHeap ALLOC memory failed");
+             return false;
+        }
+#endif
+        DEBUG_PRINT_HIGH("ION/DMABUFHEAP ALLOC unsec buf: size %u flags %x",
                 (unsigned int)ion_info->alloc_data.len,
                 ion_info->alloc_data.flags);
     }
@@ -4979,6 +5006,7 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
     ion_info->alloc_data.flags &= (~ION_FLAG_CACHED);
 #endif
 
+#ifndef USE_DMABUFHEAP
     rc = ion_alloc_fd(ion_info->dev_fd, ion_info->alloc_data.len, 0,
                       ion_info->alloc_data.heap_id_mask,
                       ion_info->alloc_data.flags, &ion_info->data_fd);
@@ -4989,8 +5017,9 @@ bool omx_video::alloc_map_ion_memory(int size, venc_ion *ion_info, int flag)
         ion_info->dev_fd = -1;
         return false;
     }
+#endif
 
-    DEBUG_PRINT_HIGH("Alloc ion memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
+    DEBUG_PRINT_HIGH("Alloc ion/dmabufheap memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
         ion_info->dev_fd, ion_info->data_fd, (unsigned int)ion_info->alloc_data.len,
         (unsigned int)ion_info->alloc_data.flags,
         (unsigned int)ion_info->alloc_data.heap_id_mask);
@@ -5004,7 +5033,7 @@ void omx_video::free_ion_memory(struct venc_ion *buf_ion_info)
         DEBUG_PRINT_ERROR("Invalid input to free_ion_memory");
         return;
     }
-    DEBUG_PRINT_HIGH("Free ion memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
+    DEBUG_PRINT_HIGH("Free ion/dmabufheap memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
         buf_ion_info->dev_fd, buf_ion_info->data_fd,
         (unsigned int)buf_ion_info->alloc_data.len,
         (unsigned int)buf_ion_info->alloc_data.flags,
@@ -5013,10 +5042,12 @@ void omx_video::free_ion_memory(struct venc_ion *buf_ion_info)
         close(buf_ion_info->data_fd);
         buf_ion_info->data_fd = -1;
     }
+#ifndef USE_DMABUFHEAP
     if (buf_ion_info->dev_fd >= 0) {
         ion_close(buf_ion_info->dev_fd);
         buf_ion_info->dev_fd = -1;
     }
+#endif
 }
 #endif
 

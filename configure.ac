@@ -71,6 +71,11 @@ AC_ARG_ENABLE([target-uses-gbm],
                 [Enable conditional compile for target target-uses-gbm [default=no]]),
         [target_uses_gbm="${enableval}"])
 
+AC_ARG_ENABLE([target-uses-dmabufheap],
+        AC_HELP_STRING([--enable-target-uses-dmabufheap],
+                [Enable conditional compile for target target-uses-dmabufheap [default=no]]),
+        [target_uses_dmabufheap="${enableval}"])
+
 AC_ARG_ENABLE([targets-that-use-flag-msm8226],
         AC_HELP_STRING([--enable-targets-that-use-flag-msm8226],
                 [Enable conditional compile for target targets_that_use_flag_msm8226 [default=no]]),
@@ -198,6 +203,7 @@ AM_CONDITIONAL(TARGETS_THAT_SUPPORT_UBWC, [test "x$targets_that_support_ubwc" = 
 AM_CONDITIONAL(TARGETS_THAT_SUPPORT_PQ, [test "x$targets_that_support_pq" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_ION, [test "x$target_uses_ion" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_GBM, [test "x$target_uses_gbm" = "xyes"])
+AM_CONDITIONAL(TARGET_USES_DMABUFHEAP, [test "x$target_uses_dmabufheap" = "xyes"])
 AM_CONDITIONAL(TARGETS_THAT_USE_FLAG_MSM8226, [test "x$targets_that_use_flag_msm8226" = "xyes"])
 AM_CONDITIONAL(TARGET_USES_MEDIA_EXTENSIONS, [test "x$target_uses_media_extensions" = "xyes"])
 AM_CONDITIONAL(MASTER_SIDE_CP_TARGET_LIST, [test "x$master_side_cp_target_list" = "xyes"])

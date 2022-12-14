@@ -27,6 +27,10 @@ AM_CPPFLAGS += -DHYPERVISOR
 AM_CPPFLAGS += -I$(top_srcdir)/hypv-intercept/
 endif
 
+if TARGET_USES_DMABUFHEAP
+AM_CPPFLAGS += -DUSE_DMABUFHEAP
+endif
+
 AM_CPPFLAGS += -DUSE_ION
 AM_CPPFLAGS += -Wno-enum-compare
 #AM_CPPFLAGS += "-include stdint.h"
@@ -97,7 +101,9 @@ libOmxVenc_la_SOURCES = $(sources)
 libOmxVenc_la_CFLAGS = $(AM_CFLAGS) $(AM_CPPFLAGS) -fPIC
 libOmxVenc_la_LDFLAGS = -module -shared -avoid-version
 libOmxVenc_la_LDFLAGS += -lstdc++ -lpthread -llog -lutils -lcutils -lglib-2.0 -ldl -lpthread -lion
-
+if TARGET_USES_DMABUFHEAP
+libOmxVenc_la_LDFLAGS += -ldmabufheap
+endif
 libOmxVenc_la_LDFLAGS += -L$(top_builddir)/libc2dcolorconvert  -L$(top_builddir)/libplatformconfig
 libOmxVenc_la_LDFLAGS += -lc2dcolorconvert -lplatformconfig
 
@@ -114,6 +120,9 @@ libOmxSwVencMpeg4_la_LDFLAGS = -module -shared -avoid-version
 libOmxSwVencMpeg4_la_LDFLAGS += -llog  -lcutils  -lglib-2.0 -lion -lMpeg4SwEncoder
 libOmxSwVencMpeg4_la_LDFLAGS += -L$(top_builddir)/libplatformconfig -L$(top_builddir)/libc2dcolorconvert
 libOmxSwVencMpeg4_la_LDFLAGS += -lplatformconfig  -lc2dcolorconvert
+if TARGET_USES_DMABUFHEAP
+libOmxSwVencMpeg4_la_LDFLAGS += -ldmabufheap
+endif
 endif
 
 if TARGET_HYPERVISOR

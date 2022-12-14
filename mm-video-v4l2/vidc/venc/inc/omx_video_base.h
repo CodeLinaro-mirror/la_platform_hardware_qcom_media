@@ -80,6 +80,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LOG_TAG "OMX-VENC"
 #include "vidc_debug.h"
 
+#ifdef USE_DMABUFHEAP
+#include <BufferAllocator/BufferAllocatorWrapper.h>
+#endif
+
 #ifdef _ANDROID_
 using namespace android;
 #include <utils/Log.h>
@@ -786,6 +790,9 @@ class omx_video: public qc_omx_component
         OMX_U64 profile_last_time;
         bool profile_etb();
         int32_t m_c2d_rotation;
+#ifdef USE_DMABUFHEAP
+        BufferAllocator *m_bufferAllocator;
+#endif
 };
 
 #endif // __OMX_VIDEO_BASE_H__
