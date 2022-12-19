@@ -1,5 +1,7 @@
 /*--------------------------------------------------------------------------
-Copyright (c) 2010-2020 The Linux Foundation. All rights reserved.
+Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
+
+Copyright (c) 2022. Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -24,6 +26,40 @@ OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Changes from Qualcomm Innovation Center are provided under the following license:
+
+Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted (subject to the limitations in the
+disclaimer below) provided that the following conditions are met:
+
+   * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+   * Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following
+     disclaimer in the documentation and/or other materials provided
+     with the distribution.
+
+   * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+     contributors may be used to endorse or promote products derived
+     from this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
 
 #include <string.h>
@@ -220,6 +256,12 @@ venc_dev::venc_dev(class omx_venc *venc_class)
     Platform::Config::getInt32(Platform::vidc_enc_quality_boost_enable,
             (int32_t *)&mQualityBoostRequested, 0);
     mQualityBoostEligible = false;
+    if (!strncmp(venc_handle->m_platform_name, "kona", 4)) {
+        property_get("vendor.media.target.version", property_value, "0");
+        if(!(strncmp(property_value, "1", PROPERTY_VALUE_MAX))) {
+            mQualityBoostRequested = false;
+        }
+    }
 
     profile_level_converter::init();
 }
@@ -3547,6 +3589,7 @@ bool venc_dev::venc_set_intra_refresh()
 {
     int rc;
     struct v4l2_control control_mode;
+    struct v4l2_control enable_only_base_layer_ir;
 
     // Default is RANDOM mode
     control_mode.id = V4L2_CID_MPEG_VIDC_VIDEO_INTRA_REFRESH_RANDOM;
@@ -3568,7 +3611,23 @@ bool venc_dev::venc_set_intra_refresh()
         // This key is ignored if the video encoder does not support the intra refresh feature.
         // From android developer reference documentation.
     }
+    enable_only_base_layer_ir.id =
+        V4L2_CID_MPEG_VIDC_ENABLE_ONLY_BASE_LAYER_IR;
+    enable_only_base_layer_ir.value =
+        intra_refresh.bEnableOnlyBaseLayerIR;
 
+    DEBUG_PRINT_LOW("Calling IOCTL set control for id=%x, val:%d",
+                    enable_only_base_layer_ir.id,
+                    enable_only_base_layer_ir.value);
+    rc = ioctl(m_nDriver_fd, VIDIOC_S_CTRL, &enable_only_base_layer_ir);
+
+    if (rc) {
+        DEBUG_PRINT_HIGH("Failed to set control, id %#x, value %d, rc:%d",
+                         enable_only_base_layer_ir.id,
+                         enable_only_base_layer_ir.value, rc);
+        // This key is ignored if the video encoder does not support the intra refresh feature.
+        // From android developer reference documentation.
+    }
     return true;
 }
 
