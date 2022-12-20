@@ -123,6 +123,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "QComOMXMetadata.h"
 #endif
 
+#ifdef USE_DMABUFHEAP
+#include <BufferAllocator/BufferAllocatorWrapper.h>
+#endif
 #define BUFFER_LOG_LOC "/data/vendor/media"
 
 #ifdef OUTPUT_EXTRADATA_LOG
@@ -325,7 +328,7 @@ void* async_message_thread (void *input)
                 struct vdec_msginfo vdec_msg;
                 vdec_msg.msgcode = VDEC_MSG_EVT_HW_ERROR;
                 vdec_msg.status_code = VDEC_S_SUCCESS;
-                DEBUG_PRINT_HIGH("SYS Error Recieved");
+                DEBUG_PRINT_ERROR("SYS Error Recieved");
                 if (omx->async_message_process(input,&vdec_msg) < 0) {
                     DEBUG_PRINT_HIGH("async_message_thread Exited");
                     break;
@@ -2146,6 +2149,9 @@ OMX_ERRORTYPE omx_vdec::component_init(OMX_STRING role)
     OMX_INIT_STRUCT(&m_sParamLowLatency, QOMX_EXTNINDEX_VIDEO_LOW_LATENCY_MODE);
     m_sParamLowLatency.nNumFrames = 0;
     m_sParamLowLatency.bEnableLowLatencyMode = OMX_FALSE;
+#ifdef USE_DMABUFHEAP
+    m_bufferAllocator = CreateDmabufHeapBufferAllocator();
+#endif
 
     return eRet;
 }
@@ -3373,6 +3379,11 @@ OMX_ERRORTYPE  omx_vdec::set_config(OMX_IN OMX_HANDLETYPE      hComp,
         }
         return ret;
 
+    } else if ((int)configIndex == (int)OMX_IndexVendorVideoSkipCropUpdateInRecfg) {
+        OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG *params = (OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG *)configData;
+        DEBUG_PRINT_HIGH("Index OMX_IndexVendorVideoSkipCropUpdateInRecfg %u", (unsigned int)params->nSkipCropUpdate);
+        m_skip_crop_update_in_reconfig = params->nSkipCropUpdate;
+        return ret;
     } else if ((int)configIndex == (int)OMX_QTIIndexConfigDescribeColorAspects) {
         VALIDATE_OMX_PARAM_DATA(configData, DescribeColorAspectsParams);
         DescribeColorAspectsParams *params = (DescribeColorAspectsParams *)configData;
@@ -5727,6 +5738,12 @@ OMX_ERRORTYPE  omx_vdec::component_deinit(OMX_IN OMX_HANDLETYPE hComp)
     free_input_buffer_header();
     free_output_buffer_header();
 
+#ifdef USE_DMABUFHEAP
+    if (m_bufferAllocator != NULL) {
+       FreeDmabufHeapBufferAllocator(m_bufferAllocator);
+       m_bufferAllocator = NULL;
+    }
+#endif
     if (m_platform_list) {
         free(m_platform_list);
         m_platform_list = NULL;
@@ -6442,6 +6459,7 @@ int omx_vdec::async_message_process (void *context, void* message)
     switch (vdec_msg->msgcode) {
 
         case VDEC_MSG_EVT_HW_ERROR:
+            DEBUG_PRINT_ERROR("VDEC_MSG_EVT_HW_ERROR");
             omx->post_event ((unsigned)NULL, vdec_msg->status_code,\
                     OMX_COMPONENT_GENERATE_HARDWARE_ERROR);
             break;
@@ -6501,7 +6519,7 @@ int omx_vdec::async_message_process (void *context, void* message)
             omxhdr = omx->m_inp_mem_ptr + v4l2_buf_ptr->index;
 
             if (v4l2_buf_ptr->flags & V4L2_BUF_INPUT_UNSUPPORTED) {
-                DEBUG_PRINT_HIGH("Unsupported input");
+                DEBUG_PRINT_ERROR("Unsupported input");
                 omx->post_event ((unsigned)NULL, vdec_msg->status_code,\
                         OMX_COMPONENT_GENERATE_HARDWARE_ERROR);
             }
@@ -6701,6 +6719,11 @@ int omx_vdec::async_message_process (void *context, void* message)
                 omx->post_event ((unsigned long)NULL, vdec_msg->status_code,
                         OMX_COMPONENT_GENERATE_EOS_DONE);
             } else {
+                DEBUG_PRINT_ERROR("Invalid output omxhdr %p, omx_base_address %p", omxhdr, omx_base_address);
+                if (omxhdr) {
+                    DEBUG_PRINT_ERROR("Invalid output pOutputPortPrivate %p, actualcount %d",
+                        omxhdr->pOutputPortPrivate, (int)omx->drv_ctx.op_buf.actualcount);
+                }
                 omx->post_event ((unsigned int)NULL, vdec_msg->status_code,
                         OMX_COMPONENT_GENERATE_HARDWARE_ERROR);
             }
@@ -6788,6 +6811,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
     //bo_fd = gbm_bo_get_fd(bo);
     /* Interim solution, just for smooth switch to new interface. */
     bo_fd = bo->ion_fd;
+
     if (bo_fd < 0) {
       DEBUG_PRINT_ERROR("Get bo fd failed");
       gbm_bo_destroy(bo);
@@ -6863,11 +6887,16 @@ bool omx_vdec::alloc_map_ion_memory(OMX_U32 buffer_size, vdec_ion *ion_info, int
         return false;
     }
 
+    ion_info->dev_fd = -1;
+    ion_info->data_fd = -1;
+
+#ifndef USE_DMABUFHEAP
     ion_info->dev_fd = ion_open();
     if (ion_info->dev_fd < 0) {
         DEBUG_PRINT_ERROR("opening ion device failed with ion_fd = %d", ion_info->dev_fd);
         return false;
     }
+#endif
 
 #ifdef HYPERVISOR
     flag &= ~ION_FLAG_CACHED;
@@ -6884,7 +6913,21 @@ bool omx_vdec::alloc_map_ion_memory(OMX_U32 buffer_size, vdec_ion *ion_info, int
     if (ion_info->alloc_data.flags & ION_FLAG_CP_BITSTREAM) {
         ion_info->alloc_data.heap_id_mask |= ION_HEAP(ION_SECURE_DISPLAY_HEAP_ID);
     }
-
+#ifdef USE_DMABUFHEAP
+    if (secure_mode && (ion_info->alloc_data.flags & ION_FLAG_SECURE)) {
+      ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "system-secure", buffer_size, 0, 0);
+    } else {
+       if (flag & ION_FLAG_CACHED) {
+         ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "qcom,system", buffer_size, 0, 0);
+       } else {
+         ion_info->data_fd = DmabufHeapAlloc(m_bufferAllocator, "qcom,system-uncached", buffer_size, 0, 0);
+       }
+    }
+    if (ion_info->data_fd < 0) {
+        DEBUG_PRINT_ERROR("DmabufHeap ALLOC memory failed");
+        return false;
+    }
+#else
     rc = ion_alloc_fd(ion_info->dev_fd, ion_info->alloc_data.len, 0,
                       ion_info->alloc_data.heap_id_mask, ion_info->alloc_data.flags,
                       &ion_info->data_fd);
@@ -6896,8 +6939,8 @@ bool omx_vdec::alloc_map_ion_memory(OMX_U32 buffer_size, vdec_ion *ion_info, int
         ion_info->dev_fd = -1;
         return false;
     }
-
-    DEBUG_PRINT_HIGH("Alloc ion memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
+#endif
+    DEBUG_PRINT_HIGH("Alloc ion/dmabufheap memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
                      ion_info->dev_fd, ion_info->data_fd, (unsigned int)ion_info->alloc_data.len,
                      (unsigned int)ion_info->alloc_data.flags,
                      (unsigned int)ion_info->alloc_data.heap_id_mask);
@@ -6913,7 +6956,7 @@ void omx_vdec::free_ion_memory(struct vdec_ion *buf_ion_info)
         return;
     }
 
-    DEBUG_PRINT_HIGH("Free ion memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
+    DEBUG_PRINT_HIGH("Free ion/dmabufheap memory: fd (dev:%d data:%d) len %d flags %#x mask %#x",
         buf_ion_info->dev_fd, buf_ion_info->data_fd,
         (unsigned int)buf_ion_info->alloc_data.len,
         (unsigned int)buf_ion_info->alloc_data.flags,
@@ -6923,10 +6966,13 @@ void omx_vdec::free_ion_memory(struct vdec_ion *buf_ion_info)
         close(buf_ion_info->data_fd);
         buf_ion_info->data_fd = -1;
     }
+
+#ifdef USE_DMABUFHEAP
     if (buf_ion_info->dev_fd >= 0) {
         ion_close(buf_ion_info->dev_fd);
         buf_ion_info->dev_fd = -1;
     }
+#endif
 }
 
 #endif
@@ -7419,7 +7465,7 @@ OMX_ERRORTYPE omx_vdec::update_portdef(OMX_PARAM_PORTDEFINITIONTYPE *portDefn)
                 (int)portDefn->nPortIndex);
         eRet = OMX_ErrorBadPortIndex;
     }
-    if (in_reconfig) {
+    if (in_reconfig && !m_skip_crop_update_in_reconfig) {
         m_extradata_misr.output_crop_rect.nLeft = 0;
         m_extradata_misr.output_crop_rect.nTop = 0;
         m_extradata_misr.output_crop_rect.nWidth = fmt.fmt.pix_mp.width;
