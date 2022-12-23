@@ -20,4 +20,11 @@
         <MediaCodec name="OMX.google.opus.decoder" type="audio/opus" update="true" rank="100"/>
         <!-- SimpleOMXComponet based software decoder-->
     </Decoders>
+    <Encoders>
+        <MediaCodec name="OMX.qcom.audio.encoder.aac" type="audio/mp4a-latm">
+            <Limit name="channel-count" max="2" />
+            <Limit name="sample-rate" ranges="8000,11025,12000,16000,22050,24000,32000,44100,48000" />
+            <Limit name="bitrate" range="8000-384000" />
+        </MediaCodec>
+    </Encoders>
 </Included>
