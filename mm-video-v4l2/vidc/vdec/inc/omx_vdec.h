@@ -1146,6 +1146,8 @@ class omx_vdec: public qc_omx_component
 #ifdef USE_DMABUFHEAP
         BufferAllocator *m_bufferAllocator;
 #endif
+        OMX_U32 m_skip_crop_update_in_reconfig;
+
         unsigned int m_fill_output_msg;
         bool client_set_fps;
         unsigned int stereo_output_mode;
