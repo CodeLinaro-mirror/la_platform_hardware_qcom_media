@@ -27,7 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
 
 /* Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -7254,8 +7254,8 @@ OMX_U32 venc_dev::append_extradata_roi_region_qp_info(OMX_OTHER_EXTRADATATYPE *d
             mbRight = regionInfo.nRegions[i].nRight >> mbBit;
             mbBottom = regionInfo.nRegions[i].nBottom >> mbBit;
             deltaQP = regionInfo.nRegions[i].nDeltaQP;
-            if (mbLeft >= mbRow || mbRight >= mbRow
-                    || mbTop >= mbCol || mbBottom >= mbCol) {
+            if (mbLeft < 0 || mbTop < 0 || mbLeft >=  mbRight || mbTop >= mbBottom
+                    || mbRight > mbRow || mbBottom > mbCol || deltaQP == 0) {
                 continue;
             }
             for (OMX_U32 row = mbTop; row <= mbBottom; row++) {
