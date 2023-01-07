@@ -200,6 +200,14 @@ OMX_ERRORTYPE omx_venc::component_init(OMX_STRING role)
          sRet);
         RETURN(OMX_ErrorInsufficientResources);
     }
+ #ifdef USE_DMABUFHEAP
+    m_bufferAllocator = CreateDmabufHeapBufferAllocator();
+    if (m_bufferAllocator == NULL)
+    {
+        DEBUG_PRINT_ERROR("ERROR: Failed to create dmabufheap buffer allocator");
+        RETURN(OMX_ErrorInsufficientResources);
+    }
+#endif
 
     sRet = swvenc_check_inst_load(m_hSwVenc);
     if (sRet != SWVENC_S_SUCCESS)
@@ -2040,6 +2048,12 @@ OMX_ERRORTYPE  omx_venc::component_deinit(OMX_IN OMX_HANDLETYPE hComp)
     m_cmd_q.m_read = m_cmd_q.m_write =0;
     m_etb_q.m_read = m_etb_q.m_write =0;
 
+#ifdef USE_DMABUFHEAP
+    if (m_bufferAllocator != NULL) {
+       FreeDmabufHeapBufferAllocator(m_bufferAllocator);
+       m_bufferAllocator = NULL;
+    }
+#endif
     DEBUG_PRINT_HIGH("Calling swvenc_deinit()");
     swvenc_deinit(m_hSwVenc);
 

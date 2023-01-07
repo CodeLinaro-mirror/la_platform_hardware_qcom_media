@@ -56,6 +56,10 @@
 #include "gbm_priv.h"
 #endif
 
+#ifdef USE_DMABUFHEAP
+#include <BufferAllocator/BufferAllocatorWrapper.h>
+#endif
+
 #include "qc_omx_component.h"
 
 #include "omx_swvdec_utils.h"
@@ -319,6 +323,10 @@ private:
     OMX_QCOM_PLATFORM_PRIVATE_ENTRY     *m_platform_entry;
     OMX_QCOM_PLATFORM_PRIVATE_PMEM_INFO *m_pmem_info;
     int m_gbm_device_fd;
+#endif
+
+#ifdef USE_DMABUFHEAP
+    BufferAllocator *m_bufferAllocator;
 #endif
 
     bool m_sync_frame_decoding_mode; ///< sync frame decoding mode enabled?
