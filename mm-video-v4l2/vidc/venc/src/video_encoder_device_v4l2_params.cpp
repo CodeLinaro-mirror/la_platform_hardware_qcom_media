@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------
 Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
 
-Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -554,7 +554,7 @@ bool venc_dev::venc_store_dynamic_config(OMX_INDEXTYPE config_type, OMX_PTR conf
     }
 
     if(venc_handle->m_etb_count)
-        newConfig.timestamp = venc_handle->m_etb_timestamp + 1;
+        newConfig.timestamp = venc_handle->m_etb_timestamp;
     else
         newConfig.timestamp = 0;
 
