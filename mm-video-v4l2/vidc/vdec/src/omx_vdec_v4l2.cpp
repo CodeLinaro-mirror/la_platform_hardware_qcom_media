@@ -2565,11 +2565,8 @@ OMX_ERRORTYPE  omx_vdec::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
             if (android_atomic_add(0, &m_queued_codec_config_count) > 0) {
                 struct timespec ts;
                 int rc = 0;
-#ifdef __BIONIC__
+
                 clock_gettime(CLOCK_MONOTONIC, &ts);
-#elif __GLIBC__
-                clock_gettime(CLOCK_REALTIME, &ts);
-#endif
                 ts.tv_sec += 1;
                 DEBUG_PRINT_LOW("waiting for %d EBDs of CODEC CONFIG buffers ",
                        m_queued_codec_config_count);
@@ -2577,7 +2574,8 @@ OMX_ERRORTYPE  omx_vdec::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
 #ifdef __BIONIC__
                 rc = sem_timedwait_monotonic_np(&m_safe_flush, &ts);
 #elif __GLIBC__
-                rc = sem_timedwait(&m_safe_flush, &ts);
+                /* Only glibc>=2.30 could support sem_clockwait with CLOCK_MONOTONIC */
+                rc = sem_clockwait(&m_safe_flush, CLOCK_MONOTONIC, &ts);
 #endif
                 if (rc) {
                     DEBUG_PRINT_ERROR("Failed to wait for EBDs of CODEC CONFIG buffers");
