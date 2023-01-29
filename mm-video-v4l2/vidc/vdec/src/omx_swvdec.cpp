@@ -4937,8 +4937,7 @@ int omx_swvdec::gbm_memory_alloc_map(OMX_U32 w,OMX_U32 h,int dev_fd,
       goto gbm_memory_alloc_map_exit;
     }
 
-    //bo_fd = gbm_bo_get_fd(bo); //gbm_bo_get_fd() dup original fd, which lose pairing relationship between fd and metadata fd, lead to issue
-    bo_fd = bo->ion_fd;
+    bo_fd = gbm_bo_get_fd(bo);
     if (bo_fd < 0) {
       OMX_SWVDEC_LOG_ERROR("Get bo fd failed");
       gbm_bo_destroy(bo);
@@ -4949,6 +4948,7 @@ int omx_swvdec::gbm_memory_alloc_map(OMX_U32 w,OMX_U32 h,int dev_fd,
     gbm_perform(GBM_PERFORM_GET_METADATA_ION_FD, bo, &meta_fd);
     if (meta_fd < 0) {
       OMX_SWVDEC_LOG_ERROR("Get bo meta fd failed");
+      close(bo_fd);
       gbm_bo_destroy(bo);
       gbm_device_destroy(gbm);
       goto gbm_memory_alloc_map_exit;
@@ -4958,7 +4958,7 @@ int omx_swvdec::gbm_memory_alloc_map(OMX_U32 w,OMX_U32 h,int dev_fd,
     op_buf_gbm_info->bo_fd = bo_fd;
     op_buf_gbm_info->meta_fd = meta_fd;
 
-    OMX_SWVDEC_LOG_ERROR("allocate gbm bo fd meta fd  %p %d %d",bo,bo_fd,meta_fd);
+    OMX_SWVDEC_LOG_ERROR("allocate gbm bo %p, fd %d, meta fd %d", bo, bo_fd, meta_fd);
     return TRUE;
 gbm_memory_alloc_map_exit:
     return FALSE;
@@ -4973,8 +4973,12 @@ void omx_swvdec::gbm_memory_free(struct vdec_gbm *buf_gbm_info)
     OMX_SWVDEC_LOG_ERROR("free gbm bo fd meta fd  %p %d %d",
            buf_gbm_info->bo,buf_gbm_info->bo_fd,buf_gbm_info->meta_fd);
 
-    if (buf_gbm_info->bo)
+    if (buf_gbm_info->bo) {
+       if (buf_gbm_info->bo_fd >= 0) {
+           close(buf_gbm_info->bo_fd);
+       }
        gbm_bo_destroy(buf_gbm_info->bo);
+    }
     buf_gbm_info->bo = NULL;
 
     if (buf_gbm_info->gbm)
