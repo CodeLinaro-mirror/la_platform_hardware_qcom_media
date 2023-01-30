@@ -7479,8 +7479,8 @@ OMX_U32 venc_dev::append_extradata_roi_region_qp_info(OMX_OTHER_EXTRADATATYPE *d
             mbRight = regionInfo.nRegions[i].nRight >> mbBit;
             mbBottom = regionInfo.nRegions[i].nBottom >> mbBit;
             deltaQP = regionInfo.nRegions[i].nDeltaQP;
-            if (mbLeft >= mbRow || mbRight >= mbRow
-                    || mbTop >= mbCol || mbBottom >= mbCol) {
+            if (mbLeft < 0 || mbTop < 0 || mbLeft >=  mbRight || mbTop >= mbBottom
+                    || mbRight > mbRow || mbBottom > mbCol || deltaQP == 0) {
                 continue;
             }
             for (OMX_U32 row = mbTop; row <= mbBottom; row++) {
