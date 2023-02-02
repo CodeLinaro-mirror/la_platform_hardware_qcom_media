@@ -1,6 +1,8 @@
 /*--------------------------------------------------------------------------
 Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
 
+Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
@@ -134,7 +136,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
             }
         case QOMX_IndexConfigVideoIntraperiod:
             {
-                DEBUG_PRINT_LOW("venc_set_param:QOMX_IndexConfigVideoIntraperiod");
+                DEBUG_PRINT_LOW("venc_set_config:QOMX_IndexConfigVideoIntraperiod");
                 QOMX_VIDEO_INTRAPERIODTYPE *intraperiod =
                     (QOMX_VIDEO_INTRAPERIODTYPE *)configData;
 
@@ -157,7 +159,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
         case OMX_IndexConfigCommonMirror:
             {
                 OMX_CONFIG_MIRRORTYPE *mirror = (OMX_CONFIG_MIRRORTYPE*) configData;
-                DEBUG_PRINT_LOW("venc_set_param: OMX_IndexConfigCommonMirror");
+                DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigCommonMirror");
 
                 if (!venc_handle->m_no_vpss && venc_set_mirror(mirror->eMirror) == false) {
                     DEBUG_PRINT_ERROR("ERROR: Setting OMX_IndexConfigCommonMirror failed");
@@ -199,7 +201,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
         case OMX_IndexConfigVideoAVCIntraPeriod:
             {
                 OMX_VIDEO_CONFIG_AVCINTRAPERIOD *avc_iperiod = (OMX_VIDEO_CONFIG_AVCINTRAPERIOD*) configData;
-                DEBUG_PRINT_LOW("venc_set_param: OMX_IndexConfigVideoAVCIntraPeriod");
+                DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigVideoAVCIntraPeriod");
 
                 if (set_nP_frames(avc_iperiod->nPFrames) == false) {
                     DEBUG_PRINT_ERROR("ERROR: Setting intra period failed");
@@ -227,7 +229,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
             }
         case OMX_IndexParamVideoAndroidVp8Encoder:
            {
-               DEBUG_PRINT_LOW("venc_set_param: OMX_IndexParamVideoAndroidVp8Encoder");
+               DEBUG_PRINT_LOW("venc_set_config: OMX_IndexParamVideoAndroidVp8Encoder");
                OMX_VIDEO_PARAM_ANDROID_VP8ENCODERTYPE *vp8EncodeParams =
                    (OMX_VIDEO_PARAM_ANDROID_VP8ENCODERTYPE *)configData;
 
@@ -333,6 +335,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                     intra_refresh.framecount = intra_refresh_period->nRefreshPeriod;
                     intra_refresh.irmode     = OMX_VIDEO_IntraRefreshRandom;
                     intra_refresh.mbcount    = 0;
+                    intra_refresh.bEnableOnlyBaseLayerIR = OMX_FALSE;
                     venc_set_intra_refresh();
                 } else {
                     DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoIntraRefreshType");
@@ -871,6 +874,7 @@ bool venc_dev::venc_set_param(void *paramData, OMX_INDEXTYPE index)
                     intra_refresh.irmode     = OMX_VIDEO_IntraRefreshCyclic;
                     intra_refresh.mbcount    = intra_refresh_param->nCirMBs;
                     intra_refresh.framecount = 0;
+                    intra_refresh.bEnableOnlyBaseLayerIR = intra_refresh_param->bEnableOnlyBaseLayerIR;
                     venc_set_intra_refresh();
                 } else {
                     DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexParamVideoIntraRefresh");

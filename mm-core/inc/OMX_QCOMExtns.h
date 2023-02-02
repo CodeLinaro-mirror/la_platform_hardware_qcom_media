@@ -27,7 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Changes from Qualcomm Innovation Center are provided under the following license:
 
-Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted (subject to the limitations in the
@@ -716,6 +716,9 @@ enum OMX_QCOM_EXTN_INDEXTYPE
 
     /* Bitrate ratio for temporal layer */
     OMX_QcomIndexParamBitrateRatio = 0x7F00007C,
+
+    /* Set Temporal layers */
+    OMX_QTIIndexParamAndroidVideoTemporalLayering = 0x7F00007D,
 
     /* Capabilities */
     OMX_QTIIndexParamCapabilitiesVTDriverVersion = 0x7F100000,
