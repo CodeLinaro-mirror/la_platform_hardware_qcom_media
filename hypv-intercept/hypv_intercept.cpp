@@ -93,12 +93,15 @@ int debug_level = 0x1;
 static int add_handle_to_index(HVFE_HANDLE handle, int index)
 {
     int rc = 0;
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
 
     memset(&g_hvfe_handle[index], 0, sizeof(struct hypv_intercept));
     if (pthread_mutex_init(&g_hvfe_handle[index].lock, NULL) != 0) {
         HYP_VIDEO_MSG_ERROR("error initializing pthread lock");
         rc = -1;
-    } else if (pthread_cond_init(&g_hvfe_handle[index].cond, NULL) != 0) {
+    } else if (pthread_cond_init(&g_hvfe_handle[index].cond, &attr) != 0) {
         HYP_VIDEO_MSG_ERROR("error initializing pthread cond");
         rc = -1;
     } else {
@@ -334,7 +337,7 @@ int hypv_poll(struct pollfd *fds, nfds_t nfds, int timeout)
         } else {
             struct hypv_intercept *handle = &g_hvfe_handle[fd_index];
 
-            clock_gettime(CLOCK_REALTIME, &ts);
+            clock_gettime(CLOCK_MONOTONIC, &ts);
             ts.tv_sec += timeout / 1000;
             ts.tv_nsec = 0;
             fds[1].revents = fds[0].revents = 0;
