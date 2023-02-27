@@ -6966,7 +6966,7 @@ void omx_vdec::free_ion_memory(struct vdec_ion *buf_ion_info)
         buf_ion_info->data_fd = -1;
     }
 
-#ifdef USE_DMABUFHEAP
+#ifndef USE_DMABUFHEAP
     if (buf_ion_info->dev_fd >= 0) {
         ion_close(buf_ion_info->dev_fd);
         buf_ion_info->dev_fd = -1;
