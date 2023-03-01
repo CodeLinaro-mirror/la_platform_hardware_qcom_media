@@ -2565,11 +2565,8 @@ OMX_ERRORTYPE  omx_vdec::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
             if (android_atomic_add(0, &m_queued_codec_config_count) > 0) {
                 struct timespec ts;
                 int rc = 0;
-#ifdef __BIONIC__
+
                 clock_gettime(CLOCK_MONOTONIC, &ts);
-#elif __GLIBC__
-                clock_gettime(CLOCK_REALTIME, &ts);
-#endif
                 ts.tv_sec += 1;
                 DEBUG_PRINT_LOW("waiting for %d EBDs of CODEC CONFIG buffers ",
                        m_queued_codec_config_count);
@@ -2577,7 +2574,8 @@ OMX_ERRORTYPE  omx_vdec::send_command_proxy(OMX_IN OMX_HANDLETYPE hComp,
 #ifdef __BIONIC__
                 rc = sem_timedwait_monotonic_np(&m_safe_flush, &ts);
 #elif __GLIBC__
-                rc = sem_timedwait(&m_safe_flush, &ts);
+                /* Only glibc>=2.30 could support sem_clockwait with CLOCK_MONOTONIC */
+                rc = sem_clockwait(&m_safe_flush, CLOCK_MONOTONIC, &ts);
 #endif
                 if (rc) {
                     DEBUG_PRINT_ERROR("Failed to wait for EBDs of CODEC CONFIG buffers");
@@ -6807,11 +6805,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
       return FALSE;
     }
 
-    /* TODO: won't use gbm_bo_get_fd() till it's redefined definitely. */
-    //bo_fd = gbm_bo_get_fd(bo);
-    /* Interim solution, just for smooth switch to new interface. */
-    bo_fd = bo->ion_fd;
-
+    bo_fd = gbm_bo_get_fd(bo);
     if (bo_fd < 0) {
       DEBUG_PRINT_ERROR("Get bo fd failed");
       gbm_bo_destroy(bo);
@@ -6822,6 +6816,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
     gbm_perform(GBM_PERFORM_GET_METADATA_ION_FD, bo, &meta_fd);
     if (meta_fd < 0) {
       DEBUG_PRINT_ERROR("Get bo meta fd failed");
+      close(bo_fd);
       gbm_bo_destroy(bo);
       gbm_device_destroy(gbm);
       return FALSE;
@@ -6831,7 +6826,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
     op_buf_gbm_info->bo_fd = bo_fd;
     op_buf_gbm_info->meta_fd = meta_fd;
 
-    DEBUG_PRINT_LOW("allocate gbm bo fd meta fd  %p %d %d",bo,bo_fd,meta_fd);
+    DEBUG_PRINT_LOW("allocate gbm bo %p, fd %d, meta fd %d", bo, bo_fd, meta_fd);
     return TRUE;
 }
 
@@ -6844,8 +6839,12 @@ void omx_vdec::free_gbm_memory(struct vdec_gbm *buf_gbm_info)
     DEBUG_PRINT_LOW("free gbm bo fd meta fd  %p %d %d",
            buf_gbm_info->bo,buf_gbm_info->bo_fd,buf_gbm_info->meta_fd);
 
-    if (buf_gbm_info->bo)
-       gbm_bo_destroy(buf_gbm_info->bo);
+    if (buf_gbm_info->bo) {
+        if (buf_gbm_info->bo_fd) {
+            close(buf_gbm_info->bo_fd);
+        }
+        gbm_bo_destroy(buf_gbm_info->bo);
+    }
     buf_gbm_info->bo = NULL;
 
     if (buf_gbm_info->gbm)
@@ -6967,7 +6966,7 @@ void omx_vdec::free_ion_memory(struct vdec_ion *buf_ion_info)
         buf_ion_info->data_fd = -1;
     }
 
-#ifdef USE_DMABUFHEAP
+#ifndef USE_DMABUFHEAP
     if (buf_ion_info->dev_fd >= 0) {
         ion_close(buf_ion_info->dev_fd);
         buf_ion_info->dev_fd = -1;
