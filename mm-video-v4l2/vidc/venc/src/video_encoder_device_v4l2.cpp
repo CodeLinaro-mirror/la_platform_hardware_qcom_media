@@ -27,7 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
 
 /* Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -183,6 +183,7 @@ venc_dev::venc_dev(class omx_venc *venc_class)
     m_roi_type = 0;
     low_latency_mode = false;
     pthread_mutex_init(&m_roilock, NULL);
+    pthread_mutex_init(&m_configlock, NULL);
     pthread_mutex_init(&pause_resume_mlock, NULL);
     pthread_cond_init(&pause_resume_cond, NULL);
     memset(&input_extradata_info, 0, sizeof(input_extradata_info));
@@ -290,6 +291,16 @@ venc_dev::~venc_dev()
         pthread_mutex_unlock(&m_roilock);
     }
     pthread_mutex_destroy(&m_roilock);
+
+    std::list<dynamicConfig>::iterator iter;
+    pthread_mutex_lock(&m_configlock);
+    for (iter = m_configlist.begin(); iter != m_configlist.end(); iter++) {
+        DEBUG_PRINT_HIGH("dynamic config data with timestamp (%lld) should have been removed already",
+            iter->timestamp);
+    }
+    m_configlist.clear();
+    pthread_mutex_unlock(&m_configlock);
+    pthread_mutex_destroy(&m_configlock);
 }
 
 void* venc_dev::async_venc_message_thread (void *input)
@@ -616,6 +627,76 @@ void venc_dev::get_roi_for_timestamp(struct roidata &roi, OMX_TICKS timestamp)
         DEBUG_PRINT_LOW("found roidata with timestamp %lld us", roi.info.nTimeStamp);
     }
     pthread_mutex_unlock(&m_roilock);
+}
+
+bool venc_dev::handle_dynamic_config(OMX_BUFFERHEADERTYPE *bufferHdr)
+{
+    std::list<dynamicConfig>::iterator iter;
+    OMX_TICKS timestamp = bufferHdr->nTimeStamp;
+
+    pthread_mutex_lock(&m_configlock);
+    iter = m_configlist.begin();
+    while (iter != m_configlist.end()) {
+        if (iter->timestamp > timestamp) {
+            iter++;
+            continue;
+        }
+        DEBUG_PRINT_LOW("found dynamic config with timestamp %lld us", iter->timestamp);
+        switch ((int)iter->type) {
+            case OMX_QcomIndexConfigVideoLTRUse:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_QcomIndexConfigVideoLTRUse");
+                if (!venc_config_useLTR(&iter->config_data.useltr))
+                    return false;
+                break;
+            case OMX_QcomIndexConfigVideoLTRMark:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_QcomIndexConfigVideoLTRMark");
+                if (!venc_config_markLTR(&iter->config_data.markltr))
+                    return false;
+                break;
+            case OMX_IndexConfigVideoFramerate:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_IndexConfigVideoFramerate");
+                if (!venc_config_framerate(&iter->config_data.framerate))
+                    return false;
+                break;
+            case OMX_QcomIndexConfigQp:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_QcomIndexConfigQp");
+                if (!venc_config_qp(&iter->config_data.configqp))
+                    return false;
+                break;
+            case QOMX_IndexConfigVideoIntraperiod:
+                DEBUG_PRINT_LOW("handle_dynamic_config:QOMX_IndexConfigVideoIntraperiod");
+                if (!venc_config_intraperiod(&iter->config_data.intraperiod))
+                    return false;
+                break;
+            case OMX_IndexConfigVideoVp8ReferenceFrame:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_IndexConfigVideoVp8ReferenceFrame");
+                if (!venc_config_vp8refframe(&iter->config_data.vp8refframe))
+                    return false;
+                break;
+            case OMX_IndexConfigVideoIntraVOPRefresh:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_IndexConfigVideoIntraVOPRefresh");
+                if (!venc_config_intravoprefresh(&iter->config_data.intravoprefresh))
+                    return false;
+                break;
+            case OMX_IndexConfigVideoBitrate:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_IndexConfigVideoBitrate");
+                if (!venc_config_bitrate(&iter->config_data.bitrate))
+                    return false;
+                break;
+            case OMX_IndexConfigCommonMirror:
+                DEBUG_PRINT_LOW("handle_dynamic_config: OMX_IndexConfigCommonMirror");
+                if (!venc_set_mirror(iter->config_data.mirror.eMirror))
+                    return false;
+                break;
+            default:
+                DEBUG_PRINT_ERROR("Unsupported dynamic config type %d with timestamp %lld us", iter->type, iter->timestamp);
+                return false;
+        }
+        iter = m_configlist.erase(iter);
+    }
+
+    pthread_mutex_unlock(&m_configlock);
+    return true;
 }
 
 inline int get_yuv_size(unsigned long fmt, int width, int height) {
@@ -2987,6 +3068,16 @@ bool venc_dev::venc_set_param(void *paramData, OMX_INDEXTYPE index)
 bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
 {
 
+    if (is_streamon_done(PORT_INDEX_IN)) {
+        if (venc_store_dynamic_config(index, configData)) {
+            DEBUG_PRINT_ERROR("dynamic config %#X successfully stored.", index);
+            return true;
+        }
+
+        /* If failed, try to handle the dynamic config immediately */
+        DEBUG_PRINT_ERROR("Store dynamic config %#X failed", index);
+    }
+
     DEBUG_PRINT_LOW("Inside venc_set_config");
 
     switch ((int)index) {
@@ -2995,15 +3086,8 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                 OMX_VIDEO_CONFIG_BITRATETYPE *bit_rate = (OMX_VIDEO_CONFIG_BITRATETYPE *)
                     configData;
                 DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigVideoBitrate");
-
-                if (bit_rate->nPortIndex == (OMX_U32)PORT_INDEX_OUT) {
-                    if (venc_set_target_bitrate(bit_rate->nEncodeBitrate) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Setting Target Bit rate failed");
-                        return false;
-                    }
-                } else {
-                    DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoBitrate");
-                }
+                if (!venc_config_bitrate(bit_rate))
+                    return false;
 
                 break;
             }
@@ -3012,15 +3096,8 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                 OMX_CONFIG_FRAMERATETYPE *frame_rate = (OMX_CONFIG_FRAMERATETYPE *)
                     configData;
                 DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigVideoFramerate");
-
-                if (frame_rate->nPortIndex == (OMX_U32)PORT_INDEX_OUT) {
-                    if (venc_set_encode_framerate(frame_rate->xEncodeFramerate) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Setting Encode Framerate failed");
-                        return false;
-                    }
-                } else {
-                    DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoFramerate");
-                }
+                if (!venc_config_framerate(frame_rate))
+                    return false;
 
                 break;
             }
@@ -3030,14 +3107,8 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                 QOMX_VIDEO_INTRAPERIODTYPE *intraperiod =
                     (QOMX_VIDEO_INTRAPERIODTYPE *)configData;
 
-                if (intraperiod->nPortIndex == (OMX_U32) PORT_INDEX_OUT) {
-                    if (venc_set_intra_period(intraperiod->nPFrames, intraperiod->nBFrames) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Request for setting intra period failed");
-                        return false;
-                    }
-
-                    client_req_disable_bframe = (intraperiod->nBFrames == 0) ? true : false;
-                }
+                if (!venc_config_intraperiod(intraperiod))
+                    return false;
 
                 break;
             }
@@ -3046,15 +3117,8 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                 OMX_CONFIG_INTRAREFRESHVOPTYPE *intra_vop_refresh = (OMX_CONFIG_INTRAREFRESHVOPTYPE *)
                     configData;
                 DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigVideoIntraVOPRefresh");
-
-                if (intra_vop_refresh->nPortIndex == (OMX_U32)PORT_INDEX_OUT) {
-                    if (venc_set_intra_vop_refresh(intra_vop_refresh->IntraRefreshVOP) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Setting Encode Framerate failed");
-                        return false;
-                    }
-                } else {
-                    DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoFramerate");
-                }
+                if (!venc_config_intravoprefresh(intra_vop_refresh))
+                    return false;
 
                 break;
             }
@@ -3081,7 +3145,7 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                     DEBUG_PRINT_ERROR("ERROR: Rotation is not supported with deinterlacing");
                     return false;
                 }
-                if(venc_set_vpe_rotation(config_rotation->nRotation) == false) {
+                if (venc_set_vpe_rotation(config_rotation->nRotation) == false) {
                     DEBUG_PRINT_ERROR("ERROR: Dimension Change for Rotation failed");
                     return false;
                 }
@@ -3103,49 +3167,27 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
             {
                 OMX_VIDEO_VP8REFERENCEFRAMETYPE* vp8refframe = (OMX_VIDEO_VP8REFERENCEFRAMETYPE*) configData;
                 DEBUG_PRINT_LOW("venc_set_config: OMX_IndexConfigVideoVp8ReferenceFrame");
-                if ((vp8refframe->nPortIndex == (OMX_U32)PORT_INDEX_IN) &&
-                        (vp8refframe->bUseGoldenFrame)) {
-                    if(venc_set_useltr(0x1) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: use goldenframe failed");
-                        return false;
-                    }
-                } else if((vp8refframe->nPortIndex == (OMX_U32)PORT_INDEX_IN) &&
-                        (vp8refframe->bGoldenFrameRefresh)) {
-                    if(venc_set_markltr(0x1) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Setting goldenframe failed");
-                        return false;
-                    }
-                } else {
-                    DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoVp8ReferenceFrame");
-                }
+                if (!venc_config_vp8refframe(vp8refframe))
+                    return false;
+
                 break;
             }
         case OMX_QcomIndexConfigVideoLTRUse:
             {
                 OMX_QCOM_VIDEO_CONFIG_LTRUSE_TYPE* pParam = (OMX_QCOM_VIDEO_CONFIG_LTRUSE_TYPE*)configData;
                 DEBUG_PRINT_LOW("venc_set_config: OMX_QcomIndexConfigVideoLTRUse");
-                if (pParam->nPortIndex == (OMX_U32)PORT_INDEX_IN) {
-                    if (venc_set_useltr(pParam->nID) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Use LTR failed");
-                        return false;
-                    }
-                } else {
-                    DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_QcomIndexConfigVideoLTRUse");
-                }
+                if (!venc_config_useLTR(pParam))
+                    return false;
+
                 break;
             }
         case OMX_QcomIndexConfigVideoLTRMark:
             {
                 OMX_QCOM_VIDEO_CONFIG_LTRMARK_TYPE* pParam = (OMX_QCOM_VIDEO_CONFIG_LTRMARK_TYPE*)configData;
                 DEBUG_PRINT_LOW("venc_set_config: OMX_QcomIndexConfigVideoLTRMark");
-                if (pParam->nPortIndex == (OMX_U32)PORT_INDEX_IN) {
-                    if (venc_set_markltr(pParam->nID) == false) {
-                        DEBUG_PRINT_ERROR("ERROR: Mark LTR failed");
-                        return false;
-                    }
-                }  else {
-                    DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_QcomIndexConfigVideoLTRMark");
-                }
+                if (!venc_config_markLTR(pParam))
+                    return false;
+
                 break;
             }
         case OMX_IndexConfigAndroidVideoTemporalLayering:
@@ -3194,13 +3236,9 @@ bool venc_dev::venc_set_config(void *configData, OMX_INDEXTYPE index)
                 OMX_QCOM_VIDEO_CONFIG_QP* pParam =
                     (OMX_QCOM_VIDEO_CONFIG_QP*) configData;
                 DEBUG_PRINT_LOW("Set_config: nQP %d", pParam->nQP);
-                if (venc_set_qp(pParam->nQP,
-                                pParam->nQP,
-                                pParam->nQP,
-                                ENABLE_I_QP | ENABLE_P_QP | ENABLE_B_QP ) == false) {
-                    DEBUG_PRINT_ERROR("Failed to set OMX_QcomIndexConfigQp failed");
+                if (!venc_config_qp(pParam))
                     return false;
-                }
+
                 break;
             }
         case OMX_IndexConfigPriority:
@@ -4500,6 +4538,12 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
         DEBUG_PRINT_ERROR("%s Failed to handle input extradata", __func__);
         return false;
     }
+
+    if (!handle_dynamic_config(bufhdr)) {
+        DEBUG_PRINT_ERROR("%s Failed to set dynamic configs", __func__);
+        return false;
+    }
+
     VIDC_TRACE_INT_LOW("ETB-TS", bufhdr->nTimeStamp / 1000);
 
     if (bufhdr->nFlags & OMX_BUFFERFLAG_EOS)
@@ -4696,6 +4740,12 @@ bool venc_dev::venc_empty_batch(OMX_BUFFERHEADERTYPE *bufhdr, unsigned index)
                 DEBUG_PRINT_ERROR("%s Failed to handle input extradata", __func__);
                 return false;
             }
+
+            if (!handle_dynamic_config(bufhdr)) {
+                DEBUG_PRINT_ERROR("%s Failed to set dynamic configs", __func__);
+                return false;
+            }
+
             VIDC_TRACE_INT_LOW("ETB-TS", bufTimeStamp / 1000);
 
             rc = ioctl(m_nDriver_fd, VIDIOC_QBUF, &buf);
@@ -6091,29 +6141,34 @@ bool venc_dev::venc_set_markltr(OMX_U32 frameIdx)
     return true;
 }
 
-bool venc_dev::venc_set_mirror(OMX_U32 mirror)
+bool venc_dev::venc_set_mirror(OMX_MIRRORTYPE mirror)
 {
-#ifdef KONA_TODO_UPDATE
-    /* replace this with: V4L2_CID_HFLIP & V4L2_CID_VFLIP */
-
     DEBUG_PRINT_LOW("venc_set_mirror");
     int rc = true;
-    struct v4l2_control control;
+    struct v4l2_control control[2];
 
-    control.id = V4L2_CID_MPEG_VIDC_VIDEO_FLIP;
-    control.value = mirror;
+    control[0].id = V4L2_CID_VFLIP;
+    control[0].value = V4L2_MPEG_MSM_VIDC_DISABLE;
+    control[1].id = V4L2_CID_HFLIP;
+    control[1].value = V4L2_MPEG_MSM_VIDC_DISABLE;
 
-    rc = ioctl(m_nDriver_fd, VIDIOC_S_CTRL, &control);
-    if (rc) {
-        DEBUG_PRINT_ERROR("Failed to set mirror %d", rc);
-        return false;
+    if (mirror == OMX_MirrorVertical || mirror == OMX_MirrorBoth) {
+        control[0].value = V4L2_MPEG_MSM_VIDC_ENABLE;
+    }
+    if (mirror == OMX_MirrorHorizontal || mirror == OMX_MirrorBoth) {
+        control[1].value = V4L2_MPEG_MSM_VIDC_ENABLE;
     }
 
-    DEBUG_PRINT_LOW("Success IOCTL set control for id=%x, val=%d",
-                    control.id, control.value);
-#else
-    (void)mirror;
-#endif
+    for(int i=0; i<2; i++) {
+        rc = ioctl(m_nDriver_fd, VIDIOC_S_CTRL, &control[i]);
+        if (rc) {
+            DEBUG_PRINT_ERROR("Failed to set mirror %d", rc);
+            return false;
+        }
+        DEBUG_PRINT_LOW("Success IOCTL set control for id=%x, val=%d",
+                        control[i].id, control[i].value);
+    }
+
     return true;
 }
 
@@ -6977,6 +7032,176 @@ bool venc_dev::venc_set_nal_size (OMX_VIDEO_CONFIG_NALSIZE *nalSizeInfo) {
     return true;
 }
 
+bool venc_dev::venc_store_dynamic_config(OMX_INDEXTYPE config_type, OMX_PTR config)
+{
+    struct dynamicConfig newConfig;
+    memset(&newConfig, 0, sizeof(dynamicConfig));
+    newConfig.type = config_type;
+
+   switch ((int)config_type) {
+        case OMX_IndexConfigVideoFramerate:
+            memcpy(&newConfig.config_data.framerate, config, sizeof(OMX_CONFIG_FRAMERATETYPE));
+            break;
+        case OMX_IndexConfigVideoIntraVOPRefresh:
+            memcpy(&newConfig.config_data.intravoprefresh, config, sizeof(OMX_CONFIG_INTRAREFRESHVOPTYPE));
+            break;
+        case OMX_IndexConfigVideoBitrate:
+            memcpy(&newConfig.config_data.bitrate, config, sizeof(OMX_VIDEO_CONFIG_BITRATETYPE));
+        case OMX_QcomIndexConfigVideoLTRUse:
+            memcpy(&newConfig.config_data.useltr, config, sizeof(OMX_QCOM_VIDEO_CONFIG_LTRUSE_TYPE));
+            break;
+        case OMX_QcomIndexConfigVideoLTRMark:
+            memcpy(&newConfig.config_data.markltr, config, sizeof(OMX_QCOM_VIDEO_CONFIG_LTRMARK_TYPE));
+            break;
+        case OMX_QcomIndexConfigQp:
+            memcpy(&newConfig.config_data.configqp, config, sizeof(OMX_QCOM_VIDEO_CONFIG_QP));
+            break;
+        case QOMX_IndexConfigVideoIntraperiod:
+            memcpy(&newConfig.config_data.intraperiod, config, sizeof(QOMX_VIDEO_INTRAPERIODTYPE));
+            break;
+        case OMX_IndexConfigVideoVp8ReferenceFrame:
+            memcpy(&newConfig.config_data.vp8refframe, config, sizeof(OMX_VIDEO_VP8REFERENCEFRAMETYPE));
+            break;
+        case OMX_IndexConfigCommonMirror:
+            memcpy(&newConfig.config_data.mirror, config, sizeof(OMX_CONFIG_MIRRORTYPE));
+            break;
+        default:
+            DEBUG_PRINT_INFO("Unsupported dynamic config.");
+            return false;
+    }
+
+    if(venc_handle->m_etb_count)
+        newConfig.timestamp = venc_handle->m_etb_timestamp + 1;
+    else
+        newConfig.timestamp = 0;
+
+    pthread_mutex_lock(&m_configlock);
+    DEBUG_PRINT_LOW("list add dynamic config with type %d timestamp %lld us", config_type, newConfig.timestamp);
+    m_configlist.push_back(newConfig);
+    pthread_mutex_unlock(&m_configlock);
+    return true;
+
+}
+
+bool venc_dev::venc_config_bitrate(OMX_VIDEO_CONFIG_BITRATETYPE *bit_rate)
+{
+    if (bit_rate->nPortIndex == (OMX_U32)PORT_INDEX_OUT) {
+        if (venc_set_target_bitrate(bit_rate->nEncodeBitrate) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Setting Target Bit rate failed");
+            return false;
+        }
+    } else {
+        DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoBitrate");
+        return false;
+    }
+    return true;
+}
+
+bool venc_dev::venc_config_framerate(OMX_CONFIG_FRAMERATETYPE *frame_rate)
+{
+    if (frame_rate->nPortIndex == (OMX_U32)PORT_INDEX_OUT) {
+        if (venc_set_encode_framerate(frame_rate->xEncodeFramerate) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Setting Encode Framerate failed");
+            return false;
+        }
+    } else {
+        DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoFramerate");
+        return false;
+    }
+    return true;
+}
+
+bool venc_dev::venc_config_intraperiod(QOMX_VIDEO_INTRAPERIODTYPE *intra_period)
+{
+    if (intra_period->nPortIndex == (OMX_U32) PORT_INDEX_OUT) {
+        if (venc_set_intra_period(intra_period->nPFrames, intra_period->nBFrames) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Request for setting intra period failed");
+            return false;
+        }
+
+        client_req_disable_bframe = (intra_period->nBFrames == 0) ? true : false;
+        return true;
+    }
+
+    return false;
+}
+
+bool venc_dev::venc_config_intravoprefresh(OMX_CONFIG_INTRAREFRESHVOPTYPE *intra_vop_refresh)
+{
+    if (intra_vop_refresh->nPortIndex == (OMX_U32)PORT_INDEX_OUT) {
+        if (venc_set_intra_vop_refresh(intra_vop_refresh->IntraRefreshVOP) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Setting Encode Framerate failed");
+            return false;
+        }
+    } else {
+        DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoFramerate");
+        return false;
+    }
+
+    return true;
+}
+
+bool venc_dev::venc_config_markLTR(OMX_QCOM_VIDEO_CONFIG_LTRMARK_TYPE *markltr)
+{
+    if (markltr->nPortIndex == (OMX_U32)PORT_INDEX_IN) {
+        if(venc_set_markltr(markltr->nID) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Mark LTR failed");
+            return false;
+        }
+    }  else {
+        DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_QcomIndexConfigVideoLTRMark");
+        return false;
+    }
+    return true;
+}
+
+bool venc_dev::venc_config_useLTR(OMX_QCOM_VIDEO_CONFIG_LTRUSE_TYPE *useltr)
+{
+    if (useltr->nPortIndex == (OMX_U32)PORT_INDEX_IN) {
+        if(venc_set_useltr(useltr->nID) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Use LTR failed");
+            return false;
+        }
+    } else {
+        DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_QcomIndexConfigVideoLTRUse");
+        return false;
+    }
+    return true;
+}
+
+bool venc_dev::venc_config_qp(OMX_SKYPE_VIDEO_CONFIG_QP *configqp)
+{
+    if (venc_set_qp(configqp->nQP,
+                    configqp->nQP,
+                    configqp->nQP,
+                    ENABLE_I_QP | ENABLE_P_QP | ENABLE_B_QP ) == false) {
+        DEBUG_PRINT_ERROR("Failed to set OMX_QcomIndexConfigQp failed");
+        return false;
+    }
+    return true;
+}
+
+bool venc_dev::venc_config_vp8refframe(OMX_VIDEO_VP8REFERENCEFRAMETYPE *vp8refframe)
+{
+    if ((vp8refframe->nPortIndex == (OMX_U32)PORT_INDEX_IN) &&
+            (vp8refframe->bUseGoldenFrame)) {
+        if(venc_set_useltr(0x1) == false) {
+            DEBUG_PRINT_ERROR("ERROR: use goldenframe failed");
+            return false;
+        }
+    } else if((vp8refframe->nPortIndex == (OMX_U32)PORT_INDEX_IN) &&
+            (vp8refframe->bGoldenFrameRefresh)) {
+        if(venc_set_markltr(0x1) == false) {
+            DEBUG_PRINT_ERROR("ERROR: Setting goldenframe failed");
+            return false;
+        }
+    } else {
+        DEBUG_PRINT_ERROR("ERROR: Invalid Port Index for OMX_IndexConfigVideoVp8ReferenceFrame");
+        return false;
+    }
+    return true;
+}
+
 #ifdef _ANDROID_ICS_
 bool venc_dev::venc_set_meta_mode(bool mode)
 {
@@ -7254,8 +7479,8 @@ OMX_U32 venc_dev::append_extradata_roi_region_qp_info(OMX_OTHER_EXTRADATATYPE *d
             mbRight = regionInfo.nRegions[i].nRight >> mbBit;
             mbBottom = regionInfo.nRegions[i].nBottom >> mbBit;
             deltaQP = regionInfo.nRegions[i].nDeltaQP;
-            if (mbLeft >= mbRow || mbRight >= mbRow
-                    || mbTop >= mbCol || mbBottom >= mbCol) {
+            if (mbLeft < 0 || mbTop < 0 || mbLeft >=  mbRight || mbTop >= mbBottom
+                    || mbRight > mbRow || mbBottom > mbCol || deltaQP == 0) {
                 continue;
             }
             for (OMX_U32 row = mbTop; row <= mbBottom; row++) {
