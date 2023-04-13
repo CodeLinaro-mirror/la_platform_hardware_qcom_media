@@ -28,7 +28,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Changes from Qualcomm Innovation Center are provided under the following license:
 
-Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted (subject to the limitations in the
@@ -102,12 +102,6 @@ void omx_video::init_vendor_extensions(VendorExtensionStore &store) {
     ADD_EXTENSION("qti-ext-down-scalar", OMX_QcomIndexParamVideoDownScalar, OMX_DirOutput)
     ADD_PARAM    ("output-width", OMX_AndroidVendorValueInt32)
     ADD_PARAM_END("output-height", OMX_AndroidVendorValueInt32)
-
-    ADD_EXTENSION("qti-ext-enc-app-input-control", OMX_QcomIndexParamVencControlInputQueue, OMX_DirInput)
-    ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
-
-    ADD_EXTENSION("qti-ext-enc-input-trigger", OMX_IndexConfigTimePosition, OMX_DirInput)
-    ADD_PARAM_END("timestamp", OMX_AndroidVendorValueInt64)
 
     ADD_EXTENSION("qti-ext-enc-low-latency", OMX_QTIIndexParamLowLatencyMode, OMX_DirInput)
     ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
@@ -229,6 +223,12 @@ void omx_video::init_vendor_extensions(VendorExtensionStore &store) {
     ADD_PARAM(BITRATE_RATIO_VALUES_KEY[6], OMX_AndroidVendorValueInt32)
     ADD_PARAM(BITRATE_RATIO_VALUES_KEY[7], OMX_AndroidVendorValueInt32)
     ADD_PARAM_END    ("bitrateRatiosSpecified", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-app-input-control", OMX_QcomIndexParamVencControlInputQueue, OMX_DirInput)
+    ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-input-trigger", OMX_IndexConfigTimePosition, OMX_DirInput)
+    ADD_PARAM_END("timestamp", OMX_AndroidVendorValueInt64)
 }
 
 OMX_ERRORTYPE omx_video::get_vendor_extension_config(
