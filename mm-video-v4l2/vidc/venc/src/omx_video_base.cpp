@@ -295,6 +295,7 @@ omx_video::omx_video():
 
     pthread_mutex_init(&m_lock, NULL);
     pthread_mutex_init(&m_TimeStampInfo.m_lock, NULL);
+    m_TimeStampInfo.ts = -1;
     m_TimeStampInfo.deferred_inbufq.m_size=0;
     m_TimeStampInfo.deferred_inbufq.m_read = m_TimeStampInfo.deferred_inbufq.m_write = 0;
     sem_init(&m_cmd_lock,0,0);
