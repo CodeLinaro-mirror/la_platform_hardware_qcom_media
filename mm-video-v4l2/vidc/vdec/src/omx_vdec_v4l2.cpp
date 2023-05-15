@@ -6750,7 +6750,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
 #endif
 {
 
-    uint32 flags = GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING;
+    uint32 flags = GBM_BO_USE_SCANOUT;
     struct gbm_device *gbm = NULL;
     struct gbm_bo *bo = NULL;
     int bo_fd = -1, meta_fd = -1;
@@ -6794,7 +6794,7 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
     } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_NV12 ||
               drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_UBWC){
        bo = gbm_bo_create(gbm, w, h,GBM_FORMAT_NV12,
-              flags);
+              flags | GBM_BO_USE_RENDERING);
     } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_P010_VENUS) {
        bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_P010,
               flags);
@@ -6966,7 +6966,7 @@ void omx_vdec::free_ion_memory(struct vdec_ion *buf_ion_info)
         buf_ion_info->data_fd = -1;
     }
 
-#ifdef USE_DMABUFHEAP
+#ifndef USE_DMABUFHEAP
     if (buf_ion_info->dev_fd >= 0) {
         ion_close(buf_ion_info->dev_fd);
         buf_ion_info->dev_fd = -1;
