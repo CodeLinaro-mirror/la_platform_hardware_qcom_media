@@ -16,6 +16,7 @@ AM_CPPFLAGS += -g -O3
 AM_CPPFLAGS += -I$(top_srcdir)/mm-core/inc/
 AM_CPPFLAGS += -I$(top_srcdir)/mm-core/src/common/
 AM_CPPFLAGS += -I$(top_srcdir)/libplatformconfig/
+AM_CPPFLAGS += $(GLIB_CFLAGS) -include glib.h
 AM_CPPFLAGS += "-Dstrlcpy=g_strlcpy"
 AM_CPPFLAGS += "-Dstrlcat=g_strlcat"
 
