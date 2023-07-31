@@ -74,12 +74,6 @@ void omx_video::init_vendor_extensions(VendorExtensionStore &store) {
     ADD_PARAM    ("output-width", OMX_AndroidVendorValueInt32)
     ADD_PARAM_END("output-height", OMX_AndroidVendorValueInt32)
 
-    ADD_EXTENSION("qti-ext-enc-app-input-control", OMX_QcomIndexParamVencControlInputQueue, OMX_DirInput)
-    ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
-
-    ADD_EXTENSION("qti-ext-enc-input-trigger", OMX_IndexConfigTimePosition, OMX_DirInput)
-    ADD_PARAM_END("timestamp", OMX_AndroidVendorValueInt64)
-
     ADD_EXTENSION("qti-ext-enc-low-latency", OMX_QTIIndexParamLowLatencyMode, OMX_DirInput)
     ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
 
@@ -141,6 +135,12 @@ void omx_video::init_vendor_extensions(VendorExtensionStore &store) {
 
     ADD_EXTENSION("qti-ext-enc-bitrate-mode", OMX_IndexParamVideoBitrate, OMX_DirOutput)
     ADD_PARAM_END("value", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-app-input-control", OMX_QcomIndexParamVencControlInputQueue, OMX_DirInput)
+    ADD_PARAM_END("enable", OMX_AndroidVendorValueInt32)
+
+    ADD_EXTENSION("qti-ext-enc-input-trigger", OMX_IndexConfigTimePosition, OMX_DirInput)
+    ADD_PARAM_END("timestamp", OMX_AndroidVendorValueInt64)
 }
 
 OMX_ERRORTYPE omx_video::get_vendor_extension_config(
