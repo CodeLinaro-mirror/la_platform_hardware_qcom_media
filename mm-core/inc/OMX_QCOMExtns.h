@@ -1182,6 +1182,18 @@ typedef struct OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG {
     OMX_BOOL bEnable;           /** Flag to enable/disable the setting */
 } OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG;
 
+/**
+ * This structure describes the parameters corresponding
+ * to OMX_VENDOR_DEINTERLACE extension. This is
+ * used for deinterlace to be set from the application..
+ */
+typedef struct OMX_VENDOR_DEINTERLACE {
+    OMX_U32 nSize;                 /** Size of the structure in bytes */
+    OMX_VERSIONTYPE nVersion;      /** OMX specification version information */
+    OMX_U32 nDeinterlace;          /** deinterlace mode value */
+} OMX_VENDOR_DEINTERLACE;
+
+
 typedef enum OMX_INDEXVENDORTYPE {
     OMX_IndexVendorFileReadInputFilename = 0xFF000001,
     OMX_IndexVendorParser3gpInputFilename = 0xFF000002,
@@ -1189,6 +1201,7 @@ typedef enum OMX_INDEXVENDORTYPE {
     OMX_IndexVendorAudioExtraData = 0xFF000004,
     OMX_IndexVendorVideoFrameRate = 0xFF000005,
     OMX_IndexVendorVideoSkipCropUpdateInRecfg = 0xFF000006,
+    OMX_IndexVendorVideoDeinterlace = 0xFF000007,
 } OMX_INDEXVENDORTYPE;
 
 typedef enum OMX_QCOM_VC1RESOLUTIONTYPE
