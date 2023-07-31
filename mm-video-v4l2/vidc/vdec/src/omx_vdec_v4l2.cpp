@@ -817,6 +817,7 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
 #ifdef USE_GBM
      drv_ctx.gbm_device_fd = -1;
 #endif
+     m_deinterlace_mode = true;
 }
 
 static const int event_type[] = {
@@ -3381,6 +3382,11 @@ OMX_ERRORTYPE  omx_vdec::set_config(OMX_IN OMX_HANDLETYPE      hComp,
         OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG *params = (OMX_VENDOR_SKIP_CROP_UPDATE_IN_RECFG *)configData;
         DEBUG_PRINT_HIGH("Index OMX_IndexVendorVideoSkipCropUpdateInRecfg %u", (unsigned int)params->nSkipCropUpdate);
         m_skip_crop_update_in_reconfig = params->nSkipCropUpdate;
+        return ret;
+    } else if ((int)configIndex == (int)OMX_IndexVendorVideoDeinterlace) {
+        OMX_VENDOR_DEINTERLACE *params = (OMX_VENDOR_DEINTERLACE *)configData;
+        DEBUG_PRINT_HIGH("Index OMX_IndexVendorVideoDeinterlace %u", (unsigned int)params->nDeinterlace);
+        m_deinterlace_mode = params->nDeinterlace;
         return ret;
     } else if ((int)configIndex == (int)OMX_QTIIndexConfigDescribeColorAspects) {
         VALIDATE_OMX_PARAM_DATA(configData, DescribeColorAspectsParams);
@@ -8876,9 +8882,11 @@ bool omx_vdec::allocate_color_convert_buf::set_color_format(
             enable_color_conversion(false);
         }
 #ifdef _OUTPUT_DEINTERLACED_
-    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&( dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m ||
-             dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed)) {
-             DEBUG_PRINT_LOW(" Enabling C2D, flag disable_ubwc_mode is %d\n", omx->m_disable_ubwc_mode);
+    } else if (status && omx->m_progressive != MSM_VIDC_PIC_STRUCT_PROGRESSIVE &&
+               omx->m_deinterlace_mode &&
+               (dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m ||
+                dest_color_format == (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32mCompressed)) {
+             DEBUG_PRINT_LOW(" Enabling C2D, disable_ubwc_mode is %d progress %d", omx->m_disable_ubwc_mode, omx->m_progressive);
              if (omx->m_disable_ubwc_mode) {
                ColorFormat = (OMX_COLOR_FORMATTYPE)QOMX_COLOR_FORMATYUV420PackedSemiPlanar32m;
                dest_format = NV12_128m;
