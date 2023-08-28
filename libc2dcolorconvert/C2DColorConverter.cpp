@@ -303,6 +303,30 @@ int C2DColorConverter::SetSourceConfigFlags(int flags)
    return 0;
 }
 
+int C2DColorConverter::ChangeQualityFlags(int qualityFactor)
+{
+    unsigned int mask = mBlit.config_mask;
+    mask &= ~(C2D_NO_BILINEAR_BIT | C2D_NO_ANTIALIASING_BIT); //clean all quality bit, it means bilinear and anti-aliasing enabled
+    switch(qualityFactor) {
+        case 0://no bilinear and no anti-aliasing
+            mask |= C2D_NO_BILINEAR_BIT | C2D_NO_ANTIALIASING_BIT;
+            break;
+        case 1://bilinear + no anti-aliasing
+            mask |= C2D_NO_ANTIALIASING_BIT;
+            break;
+        case 2://no bilinear + anti-aliasing
+            mask |= C2D_NO_BILINEAR_BIT;
+            break;
+        case 3://bilinear + anti-aliasing
+            break;
+        default:
+            ALOGE("Not supported quality factor %d, only support 0,1,2,3", qualityFactor);
+            return -1;//not supported qualityFactor
+    }
+    mBlit.config_mask = mask;
+    return 0;
+}
+
 bool C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData,
                                    int dstFd, void *dstBase, void * dstData)
 {
