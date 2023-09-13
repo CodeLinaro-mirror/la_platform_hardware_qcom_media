@@ -17,7 +17,10 @@ PRODUCT_COPY_FILES += \
     $(CONFIG_PATH)/system_properties.xml:$(TARGET_COPY_OUT_VENDOR)/etc/system_properties.xml \
     device/qcom/common/media/media_profiles.xml:$(TARGET_COPY_OUT_ODM)/etc/media_profiles_V1_0.xml
 
-ifneq ($(strip $(TARGET_BOARD_SUFFIX)),)
+ifeq (($(TARGET_1G_DDR_RAM), true)
+	PRODUCT_COPY_FILES += \
+		$(CONFIG_PATH)/media_codecs_vendor_scuba_v0_1gb.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_vendor.xml \
+else ifneq ($(strip $(TARGET_BOARD_SUFFIX)),)
 	PRODUCT_COPY_FILES += \
 		$(CONFIG_PATH)/media_codecs_vendor_32.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_vendor.xml \
 		$(CONFIG_PATH)/media_codecs_vendor_v1_32.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_vendor_v1.xml \
