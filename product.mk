@@ -21,7 +21,9 @@ MM_VIDEO += libOmxVenc
 MM_VIDEO += libstagefrighthw
 MM_VIDEO += init.qti.media.sh
 
+ifneq ($(TARGET_1G_DDR_RAM),true)
 PRODUCT_PACKAGES += $(MM_VIDEO)
+endif
 
 include hardware/qcom/media/conf_files/$(TARGET_BOARD_PLATFORM)/$(TARGET_BOARD_PLATFORM).mk
 
