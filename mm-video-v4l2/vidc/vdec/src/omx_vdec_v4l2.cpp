@@ -5123,7 +5123,7 @@ OMX_ERRORTYPE  omx_vdec::empty_this_buffer(OMX_IN OMX_HANDLETYPE         hComp,
         DEBUG_PRINT_ERROR("ERROR:ETB Buffer is NULL");
         return OMX_ErrorBadParameter;
     }
-    print_omx_buffer("EmptyThisBuffer", buffer);
+    print_omx_buffer2("EmptyThisBuffer", buffer, hComp);
 
     if (!m_inp_bEnabled) {
         DEBUG_PRINT_ERROR("ERROR:ETB incorrect state operation, input port is disabled.");
@@ -5441,7 +5441,7 @@ OMX_ERRORTYPE  omx_vdec::fill_this_buffer(OMX_IN OMX_HANDLETYPE  hComp,
              buffer, buffer ? (int)buffer->nOutputPortIndex : -1);
         return OMX_ErrorBadPortIndex;
     }
-    print_omx_buffer("FillThisBuffer", buffer);
+    print_omx_buffer2("FillThisBuffer", buffer, hComp);
 
     if (m_error_propogated) {
         DEBUG_PRINT_ERROR("Fill this buffer not allowed after error");
@@ -6397,7 +6397,7 @@ OMX_ERRORTYPE omx_vdec::fill_buffer_done(OMX_HANDLETYPE hComp,
                     return OMX_ErrorBadParameter;
                 }
             }
-            print_omx_buffer("FillBufferDone", buffer);
+            print_omx_buffer2("FillBufferDone", buffer, hComp);
             m_cb.FillBufferDone (hComp,m_app_data,il_buffer);
         } else {
             DEBUG_PRINT_ERROR("Invalid buffer address from get_il_buf_hdr");
@@ -6436,7 +6436,7 @@ OMX_ERRORTYPE omx_vdec::empty_buffer_done(OMX_HANDLETYPE         hComp,
             buffer->pBuffer = (OMX_U8*)(uintptr_t)drv_ctx.ptr_inputbuffer[nBufferIndex].pmem_fd;
         }
 
-        print_omx_buffer("EmptyBufferDone", buffer);
+        print_omx_buffer2("EmptyBufferDone", buffer, hComp);
         m_cb.EmptyBufferDone(hComp ,m_app_data, buffer);
     }
     return OMX_ErrorNone;
