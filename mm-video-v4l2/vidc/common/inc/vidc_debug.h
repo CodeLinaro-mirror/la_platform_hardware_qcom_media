@@ -225,6 +225,17 @@ static inline void print_omx_buffer(const char *str, OMX_BUFFERHEADERTYPE *pHead
         pHeader->nTimeStamp, pHeader->nFlags);
 }
 
+static inline void print_omx_buffer2(const char *str, OMX_BUFFERHEADERTYPE *pHeader, OMX_HANDLETYPE hComp)
+{
+    if (!pHeader)
+        return;
+
+    DEBUG_PRINT_HIGH("%s: Header %p buffer %p alloclen %d offset %d filledlen %d timestamp %lld flags %#x hComp %p",
+        str, pHeader, pHeader->pBuffer, pHeader->nAllocLen,
+        pHeader->nOffset, pHeader->nFilledLen,
+        pHeader->nTimeStamp, pHeader->nFlags, hComp);
+}
+
 static inline void print_v4l2_buffer(const char *str, struct v4l2_buffer *v4l2)
 {
     if (!v4l2)

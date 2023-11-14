@@ -667,30 +667,30 @@ OMX_FreeHandle(OMX_IN OMX_HANDLETYPE hComp)
     {
         clear_cmp_handle(hComp);
         /* Unload component library */
-    if( (i < (int)SIZE_OF_CORE) && core[i].so_lib_handle)
-    {
-           if(check_lib_unload(i))
-           {
-              DEBUG_PRINT_ERROR(" Unloading the dynamic library for %s\n",
-                                  core[i].name);
-              err = dlclose(core[i].so_lib_handle);
-              if(err)
-              {
-                  DEBUG_PRINT_ERROR("Error %d in dlclose of lib %s\n",
-                                     err,core[i].name);
-              }
-              core[i].so_lib_handle = NULL;
-           }
-           if(!strcmp(core[i].so_lib_name,"libOmxWmaDec.so")  ||
-              !strcmp(core[i].so_lib_name,"libOmxAacDec.so")  ||
-              !strcmp(core[i].so_lib_name,"libOmxAlacDec.so") ||
-              !strcmp(core[i].so_lib_name,"libOmxApeDec.so")) {
-               if(number_of_adec_nt_session>0)
-                   number_of_adec_nt_session--;
-               DEBUG_PRINT_ERROR("OMX_FreeHandle: reduced number_of_adec_nt_session %d\n",
-                                   number_of_adec_nt_session);
-           }
-    }
+        if( (i < (int)SIZE_OF_CORE) && core[i].so_lib_handle)
+        {
+            if(check_lib_unload(i))
+            {
+                DEBUG_PRINT(" Unloading the dynamic library for %s\n",
+                                core[i].name);
+                err = dlclose(core[i].so_lib_handle);
+                if(err)
+                {
+                    DEBUG_PRINT_ERROR("Error %d in dlclose of lib %s\n",
+                                err,core[i].name);
+                }
+                core[i].so_lib_handle = NULL;
+            }
+            if(!strcmp(core[i].so_lib_name,"libOmxWmaDec.so")  ||
+               !strcmp(core[i].so_lib_name,"libOmxAacDec.so")  ||
+               !strcmp(core[i].so_lib_name,"libOmxAlacDec.so") ||
+               !strcmp(core[i].so_lib_name,"libOmxApeDec.so")) {
+                if(number_of_adec_nt_session>0)
+                    number_of_adec_nt_session--;
+                DEBUG_PRINT("OMX_FreeHandle: reduced number_of_adec_nt_session %d\n",
+                                number_of_adec_nt_session);
+            }
+        }
     }
     else
     {

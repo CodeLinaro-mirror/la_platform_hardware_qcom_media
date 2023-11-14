@@ -3958,7 +3958,7 @@ OMX_ERRORTYPE  omx_video::empty_this_buffer(OMX_IN OMX_HANDLETYPE         hComp,
         return OMX_ErrorVersionMismatch;
     }
 
-    print_omx_buffer("EmptyThisBuffer", buffer);
+    print_omx_buffer2("EmptyThisBuffer", buffer, hComp);
     if (buffer->nInputPortIndex != (OMX_U32)PORT_INDEX_IN) {
         DEBUG_PRINT_ERROR("ERROR: Bad port index to call empty_this_buffer");
         return OMX_ErrorBadPortIndex;
@@ -4237,7 +4237,7 @@ OMX_ERRORTYPE  omx_video::fill_this_buffer(OMX_IN OMX_HANDLETYPE  hComp,
       return OMX_ErrorBadParameter;
     }
 
-    print_omx_buffer("FillThisBuffer", buffer);
+    print_omx_buffer2("FillThisBuffer", buffer, hComp);
 
     if (m_state != OMX_StateExecuting &&
             m_state != OMX_StatePause &&
@@ -4776,7 +4776,7 @@ OMX_ERRORTYPE omx_video::fill_buffer_done(OMX_HANDLETYPE hComp,
     VIDC_TRACE_INT_LOW("FBD-TS", buffer->nTimeStamp / 1000);
     VIDC_TRACE_INT_LOW("FBD-size", buffer->nFilledLen);
 
-    print_omx_buffer("FillBufferDone", buffer);
+    print_omx_buffer2("FillBufferDone", buffer, hComp);
     if (secure_session && m_pCallbacks.FillBufferDone) {
         if (buffer->nFilledLen > 0)
             m_fbd_count++;
@@ -4821,7 +4821,7 @@ OMX_ERRORTYPE omx_video::empty_buffer_done(OMX_HANDLETYPE         hComp,
         return OMX_ErrorBadParameter;
     }
 
-    print_omx_buffer("EmptyBufferDone", buffer);
+    print_omx_buffer2("EmptyBufferDone", buffer, hComp);
     pending_input_buffers--;
     VIDC_TRACE_INT_LOW("ETB-pending", pending_input_buffers);
 
