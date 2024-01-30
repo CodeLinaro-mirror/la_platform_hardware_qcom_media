@@ -28,7 +28,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
 
 /* Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -264,6 +264,7 @@ class omx_video: public qc_omx_component
         OMX_BUFFERHEADERTYPE  *psource_frame;
         OMX_BUFFERHEADERTYPE  *pdest_frame;
         bool secure_session;
+        bool enable_cma;
         bool hier_b_enabled;
         bool m_ubwc_supported;
         C2DColorConverter c2dcc;
@@ -285,7 +286,7 @@ class omx_video: public qc_omx_component
 
         // virtual int async_message_process (void *context, void* message);
         void process_event_cb(void *ctxt);
-
+        bool get_cma_status();
         OMX_ERRORTYPE allocate_buffer(
                 OMX_HANDLETYPE hComp,
                 OMX_BUFFERHEADERTYPE **bufferHdr,
