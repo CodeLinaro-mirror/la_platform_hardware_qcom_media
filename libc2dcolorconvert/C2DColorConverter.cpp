@@ -27,6 +27,13 @@
  *
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
+
+#include <inttypes.h>
 #include <C2DColorConverter.h>
 
 void swap(size_t &x, size_t &y)
@@ -331,8 +338,8 @@ bool C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData,
                                    int dstFd, void *dstBase, void * dstData)
 {
   C2D_STATUS ret;
-  uint8_t *srcMappedGpuAddr = nullptr;
-  uint8_t *dstMappedGpuAddr = nullptr;
+  gpuaddr_t srcMappedGpuAddr = 0;
+  gpuaddr_t dstMappedGpuAddr = 0;
   bool status = false;
 
   if (enabled) {
@@ -345,7 +352,7 @@ bool C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData,
       status = false;
     } else {
 
-      srcMappedGpuAddr = (uint8_t *)getMappedGPUAddr(srcFd, srcData, mSrcSize);
+      srcMappedGpuAddr = getMappedGPUAddr(srcFd, srcData, mSrcSize);
       if (!srcMappedGpuAddr) {
           pthread_mutex_unlock(&mLock);
           return false;
@@ -359,9 +366,9 @@ bool C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData,
 
       if (ret == C2D_STATUS_OK) {
 
-        dstMappedGpuAddr = (uint8_t *)getMappedGPUAddr(dstFd, dstData, mDstSize);
+        dstMappedGpuAddr = getMappedGPUAddr(dstFd, dstData, mDstSize);
         if (!dstMappedGpuAddr) {
-          unmapGPUAddr((unsigned long)srcMappedGpuAddr);
+          unmapGPUAddr(srcMappedGpuAddr);
           pthread_mutex_unlock(&mLock);
           return false;
         }
@@ -380,10 +387,10 @@ bool C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData,
 
           if (ret == C2D_STATUS_OK) {
             bool unmappedSrcSuccess;
-            unmappedSrcSuccess = unmapGPUAddr((unsigned long)srcMappedGpuAddr);
+            unmappedSrcSuccess = unmapGPUAddr(srcMappedGpuAddr);
 
             bool unmappedDstSuccess;
-            unmappedDstSuccess = unmapGPUAddr((unsigned long)dstMappedGpuAddr);
+            unmappedDstSuccess = unmapGPUAddr(dstMappedGpuAddr);
 
             if (!unmappedSrcSuccess || !unmappedDstSuccess) {
               ALOGE("%s: unmapping GPU address failed (%d:%d)", __FUNCTION__,
@@ -398,13 +405,13 @@ bool C2DColorConverter::convertC2D(int srcFd, void *srcBase, void * srcData,
           }
         } else {
           ALOGE("%s: Update dst surface def failed (%d)", __FUNCTION__, ret);
-          unmapGPUAddr((unsigned long)srcMappedGpuAddr);
-          unmapGPUAddr((unsigned long)dstMappedGpuAddr);
+          unmapGPUAddr(srcMappedGpuAddr);
+          unmapGPUAddr(dstMappedGpuAddr);
           status = false;
         }
       } else {
         ALOGE("%s: Update src surface def failed (%d)", __FUNCTION__, ret);
-        unmapGPUAddr((unsigned long)srcMappedGpuAddr);
+        unmapGPUAddr(srcMappedGpuAddr);
         status = false;
       }
     }
@@ -491,13 +498,13 @@ int32_t C2DColorConverter::getDummySurfaceDef(ColorConvertFormat format,
         (*surfaceYUVDef)->width = width;
         (*surfaceYUVDef)->height = height;
         (*surfaceYUVDef)->plane0 = (void *)0xaaaaaaaa;
-        (*surfaceYUVDef)->phys0 = (void *)0xaaaaaaaa;
+        (*surfaceYUVDef)->phys0 = 0xaaaaaaaa;
         (*surfaceYUVDef)->stride0 = calcStride(format, width);
         (*surfaceYUVDef)->plane1 = (void *)0xaaaaaaaa;
-        (*surfaceYUVDef)->phys1 = (void *)0xaaaaaaaa;
+        (*surfaceYUVDef)->phys1 = 0xaaaaaaaa;
         (*surfaceYUVDef)->stride1 = calcStride(format, width);
         (*surfaceYUVDef)->stride2 = calcStride(format, width);
-        (*surfaceYUVDef)->phys2 = NULL;
+        (*surfaceYUVDef)->phys2 = 0;
         (*surfaceYUVDef)->plane2 = NULL;
 
         if (mFlags & private_handle_t::PRIV_FLAGS_ITU_R_601_FR) {
@@ -508,7 +515,7 @@ int32_t C2DColorConverter::getDummySurfaceDef(ColorConvertFormat format,
             format == YCrCb420P) {
           ALOGI("%s: half stride for Cb Cr planes \n", __FUNCTION__);
           (*surfaceYUVDef)->stride1 = calcStride(format, width) / 2;
-          (*surfaceYUVDef)->phys2 = (void *)0xaaaaaaaa;
+          (*surfaceYUVDef)->phys2 = 0xaaaaaaaa;
           (*surfaceYUVDef)->stride2 = calcStride(format, width) / 2;
         }
 
@@ -535,7 +542,7 @@ int32_t C2DColorConverter::getDummySurfaceDef(ColorConvertFormat format,
         (*surfaceRGBDef)->width = width;
         (*surfaceRGBDef)->height = height;
         (*surfaceRGBDef)->buffer = (void *)0xaaaaaaaa;
-        (*surfaceRGBDef)->phys = (void *)0xaaaaaaaa;
+        (*surfaceRGBDef)->phys = 0xaaaaaaaa;
         (*surfaceRGBDef)->stride = calcStride(format, width);
 
         surfaceDef = *surfaceRGBDef;
@@ -552,7 +559,7 @@ int32_t C2DColorConverter::getDummySurfaceDef(ColorConvertFormat format,
     return (int32_t) ret;
 }
 
-C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(uint8_t *gpuAddr, void *base,
+C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(gpuaddr_t gpuAddr, void *base,
                                                   void *data, bool isSource)
 {
     if (isSource) {
@@ -560,11 +567,11 @@ C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(uint8_t *gpuAddr, void *base,
         srcSurfaceDef->plane0 = data;
         srcSurfaceDef->phys0  = gpuAddr + ((uint8_t *)data - (uint8_t *)base);
         srcSurfaceDef->plane1 = (uint8_t *)data + mSrcYSize;
-        srcSurfaceDef->phys1  = (uint8_t *)srcSurfaceDef->phys0 + mSrcYSize;
+        srcSurfaceDef->phys1  = srcSurfaceDef->phys0 + mSrcYSize;
         if (srcSurfaceDef->format & C2D_COLOR_FORMAT_420_I420 ||
                srcSurfaceDef->format & C2D_COLOR_FORMAT_420_YV12) {
             srcSurfaceDef->plane2 = (uint8_t *)srcSurfaceDef->plane1 + mSrcYSize/4;
-            srcSurfaceDef->phys2  = (uint8_t *)srcSurfaceDef->phys1 + mSrcYSize/4;
+            srcSurfaceDef->phys2  = srcSurfaceDef->phys1 + mSrcYSize/4;
         }
         return mC2DUpdateSurface(mSrcSurface, C2D_SOURCE,
                         (C2D_SURFACE_TYPE)(C2D_SURFACE_YUV_HOST | C2D_SURFACE_WITH_PHYS),
@@ -574,11 +581,11 @@ C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(uint8_t *gpuAddr, void *base,
         dstSurfaceDef->plane0 = data;
         dstSurfaceDef->phys0  = gpuAddr + ((uint8_t *)data - (uint8_t *)base);
         dstSurfaceDef->plane1 = (uint8_t *)data + mDstYSize;
-        dstSurfaceDef->phys1  = (uint8_t *)dstSurfaceDef->phys0 + mDstYSize;
+        dstSurfaceDef->phys1  = dstSurfaceDef->phys0 + mDstYSize;
         if (dstSurfaceDef->format & C2D_COLOR_FORMAT_420_I420 ||
                dstSurfaceDef->format & C2D_COLOR_FORMAT_420_YV12) {
             dstSurfaceDef->plane2 = (uint8_t *)dstSurfaceDef->plane1 + mDstYSize/4;
-            dstSurfaceDef->phys2  = (uint8_t *)dstSurfaceDef->phys1 + mDstYSize/4;
+            dstSurfaceDef->phys2  = dstSurfaceDef->phys1 + mDstYSize/4;
         }
 
         return mC2DUpdateSurface(mDstSurface, C2D_TARGET,
@@ -587,7 +594,7 @@ C2D_STATUS C2DColorConverter::updateYUVSurfaceDef(uint8_t *gpuAddr, void *base,
     }
 }
 
-C2D_STATUS C2DColorConverter::updateRGBSurfaceDef(uint8_t *gpuAddr, void * data, bool isSource)
+C2D_STATUS C2DColorConverter::updateRGBSurfaceDef(gpuaddr_t gpuAddr, void * data, bool isSource)
 {
     if (isSource) {
         C2D_RGB_SURFACE_DEF * srcSurfaceDef = (C2D_RGB_SURFACE_DEF *)mSrcSurfaceDef;
@@ -845,29 +852,30 @@ size_t C2DColorConverter::calcSize(ColorConvertFormat format, size_t width, size
 /*
  * Tells GPU to map given buffer and returns a physical address of mapped buffer
  */
-void * C2DColorConverter::getMappedGPUAddr(int bufFD, void *bufPtr, size_t bufLen)
+gpuaddr_t C2DColorConverter::getMappedGPUAddr(int bufFD, void *bufPtr, size_t bufLen)
 {
     C2D_STATUS status;
-    void *gpuaddr = NULL;
+    gpuaddr_t gpuaddr = 0;
     status = mC2DMapAddr(bufFD, bufPtr, bufLen, 0, KGSL_USER_MEM_TYPE_ION,
                          &gpuaddr);
     if (status != C2D_STATUS_OK) {
         ALOGE("%s: c2dMapAddr failed: status %d fd %d ptr %p len %zu flags %d",
               __FUNCTION__, status, bufFD, bufPtr, bufLen, KGSL_USER_MEM_TYPE_ION);
-        return NULL;
+        return 0;
     }
-    ALOGV("%s: c2d mapping created: gpuaddr %p fd %d ptr %p len %zu",
+    ALOGV("%s: c2d mapping created: gpuaddr 0x%" PRIx64 " fd %d ptr %p len %zu",
           __FUNCTION__, gpuaddr, bufFD, bufPtr, bufLen);
+
     return gpuaddr;
 }
 
-bool C2DColorConverter::unmapGPUAddr(unsigned long gAddr)
+bool C2DColorConverter::unmapGPUAddr(gpuaddr_t gAddr)
 {
 
-    C2D_STATUS status = mC2DUnMapAddr((void*)gAddr);
+    C2D_STATUS status = mC2DUnMapAddr(gAddr);
 
     if (status != C2D_STATUS_OK)
-        ALOGE("%s: c2dUnMapAddr failed: status %d gpuaddr %08lx",
+        ALOGE("%s: c2dUnMapAddr failed: status %d gpuaddr 0x%" PRIx64,
                                      __FUNCTION__, status, gAddr);
 
     return (status == C2D_STATUS_OK);

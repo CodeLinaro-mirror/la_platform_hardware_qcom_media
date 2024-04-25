@@ -27,6 +27,12 @@
  *
  */
 
+/*
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
+
 #ifndef C2D_ColorConverter_H_
 #define C2D_ColorConverter_H_
 
@@ -91,9 +97,9 @@ typedef C2D_STATUS (*LINK_c2dWaitTimestamp)( c2d_ts_handle timestamp );
 
 typedef C2D_STATUS (*LINK_c2dDestroySurface)( uint32 surface_id );
 
-typedef C2D_STATUS (*LINK_c2dMapAddr)( int mem_fd, void * hostptr, uint32 len, uint32 offset, uint32 flags, void ** gpuaddr);
+typedef C2D_STATUS (*LINK_c2dMapAddr)( int mem_fd, void * hostptr, uint32 len, uint32 offset, uint32 flags, gpuaddr_t* gpuaddr);
 
-typedef C2D_STATUS (*LINK_c2dUnMapAddr)(void * gpuaddr);
+typedef C2D_STATUS (*LINK_c2dUnMapAddr)(gpuaddr_t gpuaddr);
 
 typedef void (*LINK_adreno_compute_fmt_aligned_width_and_height)(int width, int height, int plane_id,
                                                            int format, int num_samples,
@@ -210,14 +216,14 @@ class C2DColorConverter{
   void ClearSurfaces();
   int32_t getDummySurfaceDef(ColorConvertFormat format, size_t width,
                              size_t height, bool isSource);
-  C2D_STATUS updateYUVSurfaceDef(uint8_t *addr, void *base, void * data, bool isSource);
-  C2D_STATUS updateRGBSurfaceDef(uint8_t *addr, void * data, bool isSource);
+  C2D_STATUS updateYUVSurfaceDef(gpuaddr_t addr, void *base, void * data, bool isSource);
+  C2D_STATUS updateRGBSurfaceDef(gpuaddr_t addr, void * data, bool isSource);
   uint32_t getC2DFormat(ColorConvertFormat format, bool isSource);
   size_t calcStride(ColorConvertFormat format, size_t width);
   size_t calcYSize(ColorConvertFormat format, size_t width, size_t height);
   size_t calcSize(ColorConvertFormat format, size_t width, size_t height);
-  void *getMappedGPUAddr(int bufFD, void *bufPtr, size_t bufLen);
-  bool unmapGPUAddr(unsigned long gAddr);
+  gpuaddr_t getMappedGPUAddr(int bufFD, void *bufPtr, size_t bufLen);
+  bool unmapGPUAddr(gpuaddr_t gAddr);
   size_t calcLumaAlign(ColorConvertFormat format);
   size_t calcSizeAlign(ColorConvertFormat format);
   C2DBytesPerPixel calcBytesPerPixel(ColorConvertFormat format);
