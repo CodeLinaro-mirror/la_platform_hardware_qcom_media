@@ -124,14 +124,14 @@ void omx_core_dlt_unregister(void);
             do { \
                 char logbuf[256]; \
                 snprintf(logbuf, sizeof(logbuf), fmt, ## __VA_ARGS__); \
-                DLT_LOG(dlt_con_omx_core, DLT_LOG_DEBUG, DLT_STRING(logbuf)); \
+                DLT_LOG(dlt_con_omx_core, DLT_LOG_INFO, DLT_STRING(logbuf)); \
             } while (0)
 
             #define DEBUG_DETAIL(fmt,...) \
             do { \
                 char logbuf[256]; \
                 snprintf(logbuf, sizeof(logbuf), fmt, ## __VA_ARGS__); \
-                DLT_LOG(dlt_con_omx_core, DLT_LOG_VERBOSE, DLT_STRING(logbuf)); \
+                DLT_LOG(dlt_con_omx_core, DLT_LOG_INFO, DLT_STRING(logbuf)); \
             } while (0)
         #else
             #define DEBUG_PRINT_ERROR LOGE
