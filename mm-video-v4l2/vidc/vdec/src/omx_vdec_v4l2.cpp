@@ -817,6 +817,7 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
 #ifdef USE_GBM
      drv_ctx.gbm_device_fd = -1;
 #endif
+     m_skip_crop_update_in_reconfig = 0;
      m_deinterlace_mode = true;
 }
 
