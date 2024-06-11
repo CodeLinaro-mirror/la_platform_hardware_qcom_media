@@ -817,6 +817,7 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
 #ifdef USE_GBM
      drv_ctx.gbm_device_fd = -1;
 #endif
+     m_skip_crop_update_in_reconfig = 0;
      m_deinterlace_mode = true;
 }
 
@@ -6791,15 +6792,15 @@ bool omx_vdec::alloc_map_gbm_memory(OMX_U32 w,OMX_U32 h,int dev_fd,
 #endif
      }
 
-    DEBUG_PRINT_LOW("create NV12 gbm_bo with width=%d, height=%d foramt %x",
-       w, h, drv_ctx.output_format);
+    DEBUG_PRINT_LOW("create gbm_bo with width=%d, height=%d, usage 0x%x, VDEC format 0x%x",
+       w, h, flags, drv_ctx.output_format);
 
     if (drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_TP10_UBWC) {
-       bo = gbm_bo_create(gbm, w, h,GBM_FORMAT_YCbCr_420_TP10_UBWC,
+       bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_YCbCr_420_TP10_UBWC,
               flags);
     } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_NV12 ||
               drv_ctx.output_format == VDEC_YUV_FORMAT_NV12_UBWC){
-       bo = gbm_bo_create(gbm, w, h,GBM_FORMAT_NV12,
+       bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_NV12,
               flags | GBM_BO_USE_RENDERING);
     } else if(drv_ctx.output_format == VDEC_YUV_FORMAT_P010_VENUS) {
        bo = gbm_bo_create(gbm, w, h, GBM_FORMAT_P010,
