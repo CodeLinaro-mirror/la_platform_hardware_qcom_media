@@ -98,14 +98,14 @@ void omx_swvdec_log_init();
 #define OMX_SWVDEC_LOG_LOW(fmt,...)                              \
     do {                                                             \
         if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_LOW)           \
-            omx_vidc_dlt_log(DLT_LOG_VERBOSE, fmt, ## __VA_ARGS__);  \
+            omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ## __VA_ARGS__);  \
     } while (0)
 
 /// high priority log message
 #define OMX_SWVDEC_LOG_HIGH(fmt,...)                            \
     do {                                                             \
         if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
-            omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ## __VA_ARGS__);    \
+            omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ## __VA_ARGS__);    \
     } while (0)
 
 /// error priority log message
@@ -119,14 +119,14 @@ void omx_swvdec_log_init();
 #define OMX_SWVDEC_LOG_API(fmt,...)                             \
     do {                                                             \
         if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
-            omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ## __VA_ARGS__);   \
+            omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ## __VA_ARGS__);   \
     } while (0)
 
 /// high priority log message for OMX SwVdec callbacks
 #define OMX_SWVDEC_LOG_CALLBACK(fmt,...)                        \
     do {                                                             \
         if (g_omx_swvdec_logmask & OMX_SWVDEC_LOGMASK_HIGH)          \
-            omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ## __VA_ARGS__);    \
+            omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ## __VA_ARGS__);    \
     } while (0)
 #else
 /// low priority log message
