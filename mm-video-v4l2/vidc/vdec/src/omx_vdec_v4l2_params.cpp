@@ -147,7 +147,7 @@ OMX_ERRORTYPE  omx_vdec::get_parameter(OMX_IN OMX_HANDLETYPE     hComp,
                                         portFmt->eCompressionFormat = eCompressionFormat;
                                     } else {
                                         DEBUG_PRINT_ERROR("get_parameter: OMX_IndexParamVideoPortFormat:"\
-                                                " NoMore compression formats");
+                                                " NoMore compression formats as portFmt->nIndex = %u", portFmt->nIndex);
                                         eRet =  OMX_ErrorNoMore;
                                     }
                                 } else if (1 == portFmt->nPortIndex) {
