@@ -323,7 +323,7 @@ void* venc_dev::async_venc_message_thread (void *input)
         }
 
         if ((pfds[1].revents & POLLIN) || (pfds[1].revents & POLLERR)) {
-            DEBUG_PRINT_ERROR("async_venc_message_thread interrupted to be exited");
+            DEBUG_PRINT_HIGH("async_venc_message_thread interrupted to be exited");
             break;
         }
 
@@ -2687,8 +2687,8 @@ bool venc_dev::venc_empty_buf(void *buffer, void *pmem_data_buf, unsigned index,
                         memset(&fmt, 0, sizeof(fmt));
                         if (usage & private_handle_t::PRIV_FLAGS_ITU_R_709 ||
                                 usage & private_handle_t::PRIV_FLAGS_ITU_R_601) {
-                            DEBUG_PRINT_ERROR("Camera buffer color format is not 601_FR.");
-                            DEBUG_PRINT_ERROR(" This leads to unknown color space");
+                            DEBUG_PRINT_HIGH("Camera buffer or upstream shared buffer with meta-mode, color format is not 601_FR.");
+                            DEBUG_PRINT_HIGH(" This leads to unknown color space");
                         }
                         if (usage & private_handle_t::PRIV_FLAGS_ITU_R_601_FR) {
                             if (is_csc_enabled) {
