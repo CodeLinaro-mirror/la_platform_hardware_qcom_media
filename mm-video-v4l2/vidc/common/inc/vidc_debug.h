@@ -120,12 +120,12 @@ extern int debug_level;
 #undef DEBUG_PRINT_LOW
 #define DEBUG_PRINT_LOW(fmt, args...) ({ \
       if (debug_level & PRIO_LOW) \
-          omx_vidc_dlt_log(DLT_LOG_VERBOSE, fmt, ##args); \
+          omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ##args); \
       })
 #undef DEBUG_PRINT_HIGH
 #define DEBUG_PRINT_HIGH(fmt, args...) ({ \
       if (debug_level & PRIO_HIGH) \
-          omx_vidc_dlt_log(DLT_LOG_DEBUG, fmt, ##args); \
+          omx_vidc_dlt_log(DLT_LOG_INFO, fmt, ##args); \
       })
 #else
 #undef DEBUG_PRINT_ERROR
