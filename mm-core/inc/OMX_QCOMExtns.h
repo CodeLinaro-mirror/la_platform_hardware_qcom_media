@@ -1193,6 +1193,11 @@ typedef struct OMX_VENDOR_DEINTERLACE {
     OMX_U32 nDeinterlace;          /** deinterlace mode value */
 } OMX_VENDOR_DEINTERLACE;
 
+typedef struct OMX_VENDOR_DEC_INPUT_EXTERNAL_BUF {
+    OMX_U32 nSize;
+    OMX_VERSIONTYPE nVersion;
+    OMX_BOOL enable;
+} OMX_VENDOR_DEC_INPUT_EXTERNAL_BUF;
 
 typedef enum OMX_INDEXVENDORTYPE {
     OMX_IndexVendorFileReadInputFilename = 0xFF000001,
@@ -1202,6 +1207,7 @@ typedef enum OMX_INDEXVENDORTYPE {
     OMX_IndexVendorVideoFrameRate = 0xFF000005,
     OMX_IndexVendorVideoSkipCropUpdateInRecfg = 0xFF000006,
     OMX_IndexVendorVideoDeinterlace = 0xFF000007,
+    OMX_IndexVendorDecInputExternalBuf = 0xFF000008,
 } OMX_INDEXVENDORTYPE;
 
 typedef enum OMX_QCOM_VC1RESOLUTIONTYPE
