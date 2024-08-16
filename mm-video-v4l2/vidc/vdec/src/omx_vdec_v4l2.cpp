@@ -819,6 +819,7 @@ omx_vdec::omx_vdec(): m_error_propogated(false),
 #endif
      m_skip_crop_update_in_reconfig = 0;
      m_deinterlace_mode = true;
+     m_input_external_buffer = false;
 }
 
 static const int event_type[] = {
@@ -3389,6 +3390,11 @@ OMX_ERRORTYPE  omx_vdec::set_config(OMX_IN OMX_HANDLETYPE      hComp,
         DEBUG_PRINT_HIGH("Index OMX_IndexVendorVideoDeinterlace %u", (unsigned int)params->nDeinterlace);
         m_deinterlace_mode = params->nDeinterlace;
         return ret;
+    } else if ((int)configIndex == (int)OMX_IndexVendorDecInputExternalBuf) {
+        OMX_VENDOR_DEC_INPUT_EXTERNAL_BUF *params = (OMX_VENDOR_DEC_INPUT_EXTERNAL_BUF *)configData;
+        DEBUG_PRINT_HIGH("Index OMX_IndexVendorDecInputExternalBuf enable %d", params->enable);
+        m_input_external_buffer = params->enable;
+        return ret;
     } else if ((int)configIndex == (int)OMX_QTIIndexConfigDescribeColorAspects) {
         VALIDATE_OMX_PARAM_DATA(configData, DescribeColorAspectsParams);
         DescribeColorAspectsParams *params = (DescribeColorAspectsParams *)configData;
@@ -4197,7 +4203,7 @@ OMX_ERRORTYPE omx_vdec::free_input_buffer(OMX_BUFFERHEADERTYPE *bufferHdr)
                           drv_ctx.ptr_inputbuffer[index].mmaped_size);
             }
 
-            if (allocate_native_handle){
+            if (allocate_native_handle || m_input_external_buffer){
                 native_handle_t *nh = (native_handle_t *)bufferHdr->pBuffer;
                 native_handle_close(nh);
                 native_handle_delete(nh);
@@ -4452,7 +4458,7 @@ OMX_ERRORTYPE  omx_vdec::allocate_input_buffer(
 
         input = *bufferHdr;
         BITMASK_SET(&m_inp_bm_count,i);
-        if (allocate_native_handle) {
+        if (allocate_native_handle || m_input_external_buffer) {
             native_handle_t *nh = native_handle_create(1 /*numFds*/, 0 /*numInts*/);
             if (!nh) {
                 DEBUG_PRINT_ERROR("Native handle create failed");
@@ -5211,6 +5217,8 @@ OMX_ERRORTYPE  omx_vdec::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
     OMX_ERRORTYPE ret = OMX_ErrorNone;
     struct vdec_bufferpayload *temp_buffer;
     bool port_setting_changed = true;
+    native_handle_t *native_handle;
+    int fd = -1, offset = 0;
 
     /*Should we generate a Aync error event*/
     if (buffer == NULL || buffer->pInputPortPrivate == NULL) {
@@ -5253,6 +5261,19 @@ OMX_ERRORTYPE  omx_vdec::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
     }
 
     auto_lock l(buf_lock);
+
+    if (m_input_external_buffer) {
+        native_handle = (native_handle_t*)buffer->pBuffer;
+        if (!native_handle) {
+          DEBUG_PRINT_ERROR("ERROR: vdec_etb_proxy: native handle is NULL");
+          return OMX_ErrorBadParameter;
+        }
+        fd = native_handle->data[0];
+        offset = buffer->nOffset;
+        DEBUG_PRINT_LOW("vdec_empty_buf_proxy: native handle fd:%d offset:%d filledlen:%d",
+            fd, offset, (int)buffer->nFilledLen);
+    }
+
     temp_buffer = (struct vdec_bufferpayload *)buffer->pInputPortPrivate;
 
     if (!temp_buffer || (temp_buffer -  drv_ctx.ptr_inputbuffer) > (int)drv_ctx.ip_buf.actualcount) {
@@ -5356,8 +5377,13 @@ OMX_ERRORTYPE  omx_vdec::empty_this_buffer_proxy(OMX_IN OMX_HANDLETYPE  hComp,
     plane.length = drv_ctx.ip_buf.buffer_size;
     plane.m.userptr = (unsigned long)temp_buffer->bufferaddr -
         (unsigned long)temp_buffer->offset;
-    plane.m.fd = temp_buffer->pmem_fd;
-    plane.data_offset = temp_buffer->offset;
+    if (!m_input_external_buffer) {
+        plane.m.fd = temp_buffer->pmem_fd;
+        plane.data_offset = temp_buffer->offset;
+    } else {
+        plane.m.fd = fd;
+        plane.data_offset = offset;
+    }
     plane.reserved[MSM_VIDC_INPUT_TAG_1] = (unsigned long)buffer->pMarkData;
     plane.reserved[MSM_VIDC_INPUT_TAG_2] = (unsigned long)buffer->hMarkTargetComponent;
     buf.m.planes = &plane;
