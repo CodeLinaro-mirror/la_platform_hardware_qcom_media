@@ -26,6 +26,12 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------*/
+/*Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+
+Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -108,6 +114,8 @@ static int add_handle_to_index(HVFE_HANDLE handle, int index)
         g_hvfe_handle[index].handle = handle;
         g_hvfe_handle_count++;
     }
+
+    pthread_condattr_destroy(&attr);
 
     return rc;
 }
